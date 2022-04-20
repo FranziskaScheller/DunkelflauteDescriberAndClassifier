@@ -11,6 +11,8 @@ from dateutil.relativedelta import relativedelta
 import config
 import ETL
 import Preprocessor
+import pickle
+import json
 
 if config.ETL:
 
@@ -24,27 +26,8 @@ if config.ETL:
 
     if config.ETL_meteo_vars_API:
 
-        ETL.MeterologyVarsLoaderAPI2()
+        ETL.MeterologyVarsLoaderAPIManually()
 
-import cdsapi
-c = cdsapi.Client()
-
-c.retrieve(
-    'sis-energy-derived-reanalysis',
-    {
-        'format': 'zip',
-        'variable': [
-            '2m_air_temperature', 'pressure_at_sea_level', 'surface_downwelling_shortwave_radiation',
-            'wind_speed_at_100m', 'wind_speed_at_10m',
-        ],
-        'spatial_aggregation': 'original_grid',
-        'temporal_aggregation': 'hourly',
-        'year': '1980',
-        'month': [
-            '11', '12',
-        ],
-    },
-    'download19801112.zip')
 
 #todo: check if sum of capacity of variables < threshold is correct or each of them needs to be
 """
@@ -65,26 +48,39 @@ As a consequence, the estimated capacity factors are generally overestimated com
 i) the real turbines installed have various characteristics, including lower hub height, lower installed capacity, etc. 
 and ii) our estimation does not take into account turbines’ unavailability for maintenance or failures.
 """
-CFR_sum_solar_wind = Preprocessor.CFR_Aggregator(solar_pv_power_CFR, wind_power_ons_CFR, wind_power_offs_CFR)
-# todo: check if we want to include rows where all entries for all variables are zero
 
-solar_pv_wind_power_moving_avg = Preprocessor.MovingAveragesCalculator(CFR_sum_solar_wind)
+"""
+Calculate moving averages
+"""
+if config.Preprocessor:
 
-#solar_pv_wind_power_moving_avg.to_csv(config.file_path + 'solar_pv_wind_power_moving_avg.csv')
+    CFR_sum_solar_wind = Preprocessor.CFR_Aggregator(solar_pv_power_CFR, wind_power_ons_CFR, wind_power_offs_CFR)
+    if config.Preprocessor_calc_mov_avg:
+        # todo: check if we want to include rows where all entries for all variables are zero
+        solar_pv_wind_power_moving_avg = Preprocessor.MovingAveragesCalculator(CFR_sum_solar_wind)
+        # solar_pv_wind_power_moving_avg.to_csv(config.file_path + 'solar_pv_wind_power_moving_avg.csv')
 
+    solar_pv_wind_power_moving_avg = pd.read_csv(config.file_path + 'solar_pv_wind_power_moving_avg.csv', index_col= False)
+    solar_pv_wind_power_moving_avg = solar_pv_wind_power_moving_avg[solar_pv_wind_power_moving_avg.columns[1:]]
 
+    installed_capacity_solar_pv_power = Preprocessor.InstalledCapacityCorrector(solar_pv_wind_power_moving_avg, CFR_sum_solar_wind)
+    print(1)
+    solar_pv_power_CFR[solar_pv_power_CFR.columns[1:]] = solar_pv_power_CFR[solar_pv_power_CFR.columns[1:]].round(3)
+    # solar_pv_power_CFR[solar_pv_power_CFR['Date'].dt.year <= 1985].to_csv(
+    #     '/Volumes/PortableSSD/test.csv', index=False)
+    solar_pv_power_CFR[solar_pv_power_CFR['Date'].dt.year <= 2022].to_csv(
+       '/Volumes/PortableSSD/test.csv', sep=';', encoding = 'latin1')
+    #todo: try low memory thing or encoding= 'unicode_escape'
 
-installed_capacity_solar_pv_power = solar_pv_power_NRG.drop(columns = 'Date').div(solar_pv_power_CFR.drop(columns = 'Date'))
+    # installed_capacity_solar_pv_power[installed_capacity_solar_pv_power['Date'].dt.year <= 1979].to_json(
+    #     path_or_buf='/Volumes/PortableSSD/test.pkl', orient="split")
+    print(2)
+    #df1 = pd.read_json(path_or_buf='/Volumes/PortableSSD/test.csv', orient="split")
+    test = pd.read_csv('/Volumes/PortableSSD/test.csv', error_bad_lines=False, sep=';', encoding = 'latin1')
+    print(3)
+    #installed_capacity_solar_pv_power = solar_pv_power_NRG.drop(columns = 'Date').div(solar_pv_power_CFR.drop(columns = 'Date'))
 
-
-print(1)
-    #day_date_t = date_t.day
-
-
-
-    #month_date_t = date_t.month
-
-# calculate gleitende Mittelwerte
+    dunkelflaute_date_list = Preprocessor.HistDunkelflauteDetector(installed_capacity_solar_pv_power)
 
 
 # sum of capacities below ...% (?)
@@ -92,25 +88,6 @@ print(1)
 #ETL.FileDownloadInsights(config.file_path_energy_vars, config.file_names_energy_vars)
 
 
-
-c = cdsapi.Client()
-
-c.retrieve(
-    'sis-energy-derived-reanalysis',
-    {
-        'format': 'zip',
-        'variable': [
-           '2m_air_temperature', 'pressure_at_sea_level', 'solar_photovoltaic_power_generation',
-            'surface_downwelling_shortwave_radiation', 'total_precipitation', 'wind_power_generation_offshore',
-             'wind_power_generation_onshore', 'wind_speed_at_100m', 'wind_speed_at_10m',
-         ],
-         'energy_product_type': 'capacity_factor_ratio',
-         'spatial_aggregation': 'original_grid',
-         'temporal_aggregation': 'hourly',
-         'year': '2021',
-         'month': '01',
-     },
-     'download.zip')
 
 import netCDF4 as nc
 fn = '/Users/franziska/PycharmProjects/DunkelflauteDescriberAndClassifier/download/H_ERA5_ECMW_T639_GHI_0000m_Euro_025d_S197901010000_E197901312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'

@@ -49,13 +49,12 @@ def MovingAveragesCalculator(CFR_sum_solar_wind):
             for y in range(1, 2022 - 1979):
                 new_date = date_list[x] + relativedelta(years=y)
                 date_list.append(new_date)
-                #sprint(new_date)
+                #print(new_date)
 
         date_list_mean = [date_t + relativedelta(years=y) for y in range(0,2022-1979)]
 # todo: check whether every day or every hour is needed
         #date_list_mean = [date_t + relativedelta(years=y) + relativedelta(hours=h) for y in range(0, 2022 - 1979) for h in range(0,23)]
 
-        #mean_l = solar_pv_power_CFR[solar_pv_power_CFR['Date'].isin(date_list)].drop(columns = 'Date').mean(axis = 0)
         # calculate mean by ignoring nan values
         mean_l = np.nanmean(CFR_sum_solar_wind[CFR_sum_solar_wind['Date'].isin(date_list)].drop(columns='Date'), axis=0)
 
@@ -64,10 +63,32 @@ def MovingAveragesCalculator(CFR_sum_solar_wind):
 
     return solar_pv_wind_power_moving_avg
 
-def HistDunkelflauteDetector(solar_pv_wind_power_moving_avg):
+def InstalledCapacityCorrector(solar_pv_wind_power_moving_avg, CFR_sum_solar_wind):
+    """
+    Function that takes the Dataframe containing the mean of the capacities of solar and PV, offshore and onshore wind
+    and divides these values by the x- days moving averages of the capacities in order to normalize these values on the
+    scale typically for that season of the year
+    :param solar_pv_wind_power_moving_avg:
+    :param CFR_sum_solar_wind:
+    :return:
+    """
 
-    for country in solar_pv_wind_power_moving_avg.columns[1:]:
+    # in order to prevent from dividing by zero replace zeros by NaN
+    solar_pv_wind_power_moving_avg.replace(0, np.NaN)
 
-        country = solar_pv_wind_power_moving_avg[['Date', str(country)]][solar_pv_wind_power_moving_avg[str(country)] <= config.Capacity_Threshold_DF[2]]
+    installed_capacity_solar_pv_power = CFR_sum_solar_wind[CFR_sum_solar_wind.columns[1:]] / (solar_pv_wind_power_moving_avg[
+        solar_pv_wind_power_moving_avg.columns[1:]].values * 3)
 
-    return
+    installed_capacity_solar_pv_power.insert(loc=0, column='Date', value=CFR_sum_solar_wind['Date'])
+
+    return installed_capacity_solar_pv_power
+
+def HistDunkelflauteDetector(installed_capacity_solar_pv_power):
+
+    for country in installed_capacity_solar_pv_power.columns[1:]:
+
+        country = installed_capacity_solar_pv_power[['Date', str(country)]][installed_capacity_solar_pv_power[str(country)] <= config.Capacity_Threshold_DF]
+
+    dunkelflaute_date_list = 1
+
+    return dunkelflaute_date_list

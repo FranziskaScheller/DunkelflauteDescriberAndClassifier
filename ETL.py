@@ -82,8 +82,6 @@ def EnergyVarsLoaderFromCSV():
     return solar_pv_power_CFR, solar_pv_power_NRG, wind_power_offs_CFR, wind_power_offs_NRG, wind_power_ons_CFR, wind_power_ons_NRG
 
 
-
-
 def FileDownloadInsights(path, file_names):
 
     for f in file_names:
@@ -116,16 +114,17 @@ def MeterologyVarsLoaderAPI():
                 },
                 'download19810102.zip')
 
-def MeterologyVarsLoaderAPI2():
+def MeterologyVarsLoaderAPIManually():
     import cdsapi
     c = cdsapi.Client()
 
-    years_api = [str(y) for y in range(1984, config.last_year_meterology_vars)]
+    #years_api = [str(y) for y in range(1984, config.last_year_meterology_vars)]
+    years_api = [str(y) for y in range(1979, 1980)]
     months_api = [['01', '02', ], ['03', '04', ], ['05', '06', ], ['07', '08', ], ['09', '10', ], ['11', '12', ]]
 
 
     for years in years_api:
-        name = 'download' + years + '0102.zip'
+        name = 'download' + years + '1112.zip'
         c.retrieve(
                     'sis-energy-derived-reanalysis',
                     {
@@ -137,7 +136,7 @@ def MeterologyVarsLoaderAPI2():
                         'spatial_aggregation': 'original_grid',
                         'temporal_aggregation': 'hourly',
                         'year': years,
-                        'month': ['01', '02', ],
+                        'month': ['11', '12', ],
                     },
                     name)
 
