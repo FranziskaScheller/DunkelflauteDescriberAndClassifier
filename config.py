@@ -19,6 +19,8 @@ file_names_energy_vars = ['H_ERA5_ECMW_T639_SPV_0000m_Euro_NUT0_S197901010000_E2
                           'H_ERA5_ECMW_T639_WON_0100m_Euro_NUT0_S197901010000_E202203312300_CFR_TIM_01h_NA-_noc_org_NA_NA---_NA---_PhM01.csv',
                           'H_ERA5_ECMW_T639_WON_0100m_Euro_NUT0_S197901010000_E202203312300_NRG_TIM_01h_NA-_noc_org_NA_NA---_NA---_PhM01.csv']
 
+
+file_path_ext_ssd = '/Volumes/PortableSSD/'
 Capacity_Threshold_DF = 0.1
 Min_length_DF = 24 # in hours
 

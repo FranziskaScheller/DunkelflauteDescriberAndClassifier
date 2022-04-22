@@ -13,6 +13,7 @@ import ETL
 import Preprocessor
 import pickle
 import json
+import csv
 
 if config.ETL:
 
@@ -27,6 +28,38 @@ if config.ETL:
     if config.ETL_meteo_vars_API:
 
         ETL.MeterologyVarsLoaderAPIManually()
+
+import netCDF4 as nc
+fn = '/Users/franziska/PycharmProjects/DunkelflauteDescriberAndClassifier/data/download19790102/H_ERA5_ECMW_T639_GHI_0000m_Euro_025d_S197901010000_E197901312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
+ds = nc.Dataset(fn)
+
+time = ds['time'][:]
+longitude = ds['longitude'][:]
+latitude = ds['latitude'][:]
+ssrd = ds['ssrd'][:]
+ssrd = ssrd.data
+ssrd_reshaped = ssrd.reshape(ssrd.shape[0], -1).T.round(3)
+#
+# pd.DataFrame(ssrd_reshaped).to_csv(
+#      config.file_path_ext_ssd + 'test3.csv', sep=';', encoding='latin1', index=False, header=False)
+#exp = ssrd_reshaped[:,:]
+pd.DataFrame(ssrd_reshaped).to_csv(
+     config.file_path_ext_ssd + 'test6.csv', sep=';', encoding='latin1', index=False, header=False, quoting=csv.QUOTE_NONE)
+test5 = pd.read_csv(config.file_path_ext_ssd + 'test6.csv',
+                                             error_bad_lines=False, sep=';', encoding='latin1', index_col=False, header=None, dtype='unicode', low_memory=False)
+print(11)
+test4 = pd.read_csv(config.file_path_ext_ssd + 'test3.csv',
+                                             error_bad_lines=False, sep=';', encoding='latin1', index_col=False, header=None, dtype='unicode', low_memory=False)
+
+np.savetxt(config.file_path_ext_ssd + 'test2.txt', ssrd_reshaped)
+print(11)
+#ssrd.data.tofile('test1.csv',sep=',',format='%10.5f')
+test4 = np.loadtxt(config.file_path_ext_ssd + 'test2.txt')
+
+test4_org = test4.reshape(
+    test4.shape[0], test4.shape[1] // ssrd.shape[2], ssrd.shape[2])
+
+name = list(ds.variables.values())[3].name
 
 
 #todo: check if sum of capacity of variables < threshold is correct or each of them needs to be
@@ -58,27 +91,15 @@ if config.Preprocessor:
     if config.Preprocessor_calc_mov_avg:
         # todo: check if we want to include rows where all entries for all variables are zero
         solar_pv_wind_power_moving_avg = Preprocessor.MovingAveragesCalculator(CFR_sum_solar_wind)
+        solar_pv_wind_power_moving_avg.to_csv(
+            config.file_path_ext_ssd + 'solar_pv_wind_power_moving_avg.csv', sep=';', encoding='latin1', index=False)
         # solar_pv_wind_power_moving_avg.to_csv(config.file_path + 'solar_pv_wind_power_moving_avg.csv')
 
-    solar_pv_wind_power_moving_avg = pd.read_csv(config.file_path + 'solar_pv_wind_power_moving_avg.csv', index_col= False)
+    solar_pv_wind_power_moving_avg = pd.read_csv(config.file_path_ext_ssd + 'solar_pv_wind_power_moving_avg.csv', error_bad_lines=False, sep=';', encoding = 'latin1', index_col= False)
+    #solar_pv_wind_power_moving_avg = pd.read_csv(config.file_path + 'solar_pv_wind_power_moving_avg.csv', index_col= False)
     solar_pv_wind_power_moving_avg = solar_pv_wind_power_moving_avg[solar_pv_wind_power_moving_avg.columns[1:]]
 
     installed_capacity_solar_pv_power = Preprocessor.InstalledCapacityCorrector(solar_pv_wind_power_moving_avg, CFR_sum_solar_wind)
-    print(1)
-    solar_pv_power_CFR[solar_pv_power_CFR.columns[1:]] = solar_pv_power_CFR[solar_pv_power_CFR.columns[1:]].round(3)
-    # solar_pv_power_CFR[solar_pv_power_CFR['Date'].dt.year <= 1985].to_csv(
-    #     '/Volumes/PortableSSD/test.csv', index=False)
-    solar_pv_power_CFR[solar_pv_power_CFR['Date'].dt.year <= 2022].to_csv(
-       '/Volumes/PortableSSD/test.csv', sep=';', encoding = 'latin1')
-    #todo: try low memory thing or encoding= 'unicode_escape'
-
-    # installed_capacity_solar_pv_power[installed_capacity_solar_pv_power['Date'].dt.year <= 1979].to_json(
-    #     path_or_buf='/Volumes/PortableSSD/test.pkl', orient="split")
-    print(2)
-    #df1 = pd.read_json(path_or_buf='/Volumes/PortableSSD/test.csv', orient="split")
-    test = pd.read_csv('/Volumes/PortableSSD/test.csv', error_bad_lines=False, sep=';', encoding = 'latin1')
-    print(3)
-    #installed_capacity_solar_pv_power = solar_pv_power_NRG.drop(columns = 'Date').div(solar_pv_power_CFR.drop(columns = 'Date'))
 
     dunkelflaute_date_list = Preprocessor.HistDunkelflauteDetector(installed_capacity_solar_pv_power)
 
