@@ -6,7 +6,9 @@ ETL = True
 ETL_energy_vars_API = False
 ETL_energy_vars_Load = True
 ETL_meteo_vars = True
-ETL_meteo_vars_API = False
+ETL_meteo_vars_API = True
+ETL_meteo_vars_Write = False
+ETL_meteo_vars_Reader = True
 
 Preprocessor = True
 Preprocessor_calc_mov_avg = False

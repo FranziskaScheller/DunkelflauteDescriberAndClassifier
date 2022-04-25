@@ -85,10 +85,27 @@ def InstalledCapacityCorrector(solar_pv_wind_power_moving_avg, CFR_sum_solar_win
 
 def HistDunkelflauteDetector(installed_capacity_solar_pv_power):
 
+    dunkelflaute_date_list = {}
+
     for country in installed_capacity_solar_pv_power.columns[1:]:
 
-        country = installed_capacity_solar_pv_power[['Date', str(country)]][installed_capacity_solar_pv_power[str(country)] <= config.Capacity_Threshold_DF]
+        #country = installed_capacity_solar_pv_power[['Date', str(country)]][installed_capacity_solar_pv_power[str(country)] <= config.Capacity_Threshold_DF]
 
-    dunkelflaute_date_list = 1
+        installed_capacity_solar_pv_power_country = installed_capacity_solar_pv_power[['Date', str(country)]]
+        installed_capacity_solar_pv_power_country_df_candidated = installed_capacity_solar_pv_power_country[installed_capacity_solar_pv_power_country[str(country)] <= config.Capacity_Threshold_DF]
+
+        ind = 0
+        for dates in installed_capacity_solar_pv_power_country_df_candidated['Date']:
+            range_period_df = pd.date_range(start=dates, end=dates + timedelta(hours=config.Min_length_DF), freq='H')
+
+            if pd.DataFrame(range_period_df).isin(installed_capacity_solar_pv_power_country_df_candidated['Date']).all(axis='columns'):
+
+                if ind == 0:
+                    dunkelflaute_date_list_country = [range_period_df]
+                    ind = 1
+                else:
+                    dunkelflaute_date_list_country = dunkelflaute_date_list_country.append(range_period_df)
+
+            dunkelflaute_date_list[str(country)] = list(set(dunkelflaute_date_list_country))
 
     return dunkelflaute_date_list

@@ -6,7 +6,10 @@ import config
 import pandas as pd
 import netCDF4 as nc
 import cdsapi
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
+import csv
+import numpy as np
+
 c = cdsapi.Client()
 
 
@@ -114,17 +117,18 @@ def MeterologyVarsLoaderAPI():
                 },
                 'download19810102.zip')
 
-def MeterologyVarsLoaderAPIManually():
+def MeterologyVarsLoaderAPIManually(year_start, year_end):
     import cdsapi
     c = cdsapi.Client()
 
     #years_api = [str(y) for y in range(1984, config.last_year_meterology_vars)]
-    years_api = [str(y) for y in range(1979, 1980)]
+    years_api = [str(y) for y in range(year_start, year_end)]
     months_api = [['01', '02', ], ['03', '04', ], ['05', '06', ], ['07', '08', ], ['09', '10', ], ['11', '12', ]]
 
 
     for years in years_api:
-        name = 'download' + years + '1112.zip'
+        #name = config.file_path_ext_ssd + 'download' + years + '0506.zip'
+        name = 'download' + years + '0102.zip'
         c.retrieve(
                     'sis-energy-derived-reanalysis',
                     {
@@ -136,34 +140,217 @@ def MeterologyVarsLoaderAPIManually():
                         'spatial_aggregation': 'original_grid',
                         'temporal_aggregation': 'hourly',
                         'year': years,
-                        'month': ['11', '12', ],
+                        'month': ['01', '02', ],
                     },
                     name)
 
 
-    # import cdsapi
-    #
-    # c = cdsapi.Client()
-    #
-    # c.retrieve(
-    #     'sis-energy-derived-reanalysis',
-    #     {
-    #         'format': 'zip',
-    #         'variable': [
-    #             '2m_air_temperature', 'pressure_at_sea_level', 'surface_downwelling_shortwave_radiation',
-    #             'wind_speed_at_100m', 'wind_speed_at_10m',
-    #         ],
-    #         'spatial_aggregation': 'original_grid',
-    #         'temporal_aggregation': 'hourly',
-    #         'year': '1979',
-    #         'month': [
-    #             '01', '02',
-    #         ],
-    #     },
-    #     'download.zip')
-#
-#
-# year_today = date.today().year()
-# month_today = date.today().month()
+def MeterologyVarsLoaderGHI(years):
+
+    for year in years:
+        ind = 0
+        for month in [['01', '02', '0131', '0228'], ['03', '04', '0331', '0430'], ['05', '06', '0531', '0630'], ['07', '08','0731', '0831'],
+                     ['09', '10', '0930', '1031'], ['11', '12', '1130', '1231']]:
+
+            month_start = month[0]
+            month_end = month[1]
+            fn = config.file_path_ext_ssd + 'download' + year + month_start + month_end + '/H_ERA5_ECMW_T639_GHI_0000m_Euro_025d_S' + year + month_start + '010000_E' + year + \
+                 month[2] + '2300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
+            ds = nc.Dataset(fn)
+            fn2 = config.file_path_ext_ssd + 'download' + year + month_start + month_end + '/H_ERA5_ECMW_T639_GHI_0000m_Euro_025d_S' + year + month_end + '010000_E' + year + \
+                  month[3] + '2300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
+            ds2 = nc.Dataset(fn2)
+
+            longitude = ds['longitude'][:]
+            latitude = ds['latitude'][:]
+            ssrd = ds['ssrd'][:].data
+            ssrd2 = ds2['ssrd'][:].data
+
+            ssrd_conc = np.concatenate((ssrd, ssrd2))
+            time_conc = np.concatenate((ds['time'][:].data, ds2['time'][:].data))
+
+            if ind == 0:
+                ssrd_comp = ssrd_conc
+                time_comp = time_conc
+
+                unit = ds.variables['time'].units
+                ref_date = datetime(int(unit[12:16]), int(unit[17:19]), int(unit[20:22]))
+                start_date = ref_date + timedelta(hours=int(ds.variables['time'][0]))
+
+                ind = 1
+            else:
+                ssrd_comp = np.concatenate((ssrd_comp, ssrd_conc))
+                time_comp = np.concatenate((time_comp, time_conc))
+
+
+        dates = pd.Series(start_date)
+        for d in range(1, len(time_comp)):
+            dates = dates.append(pd.Series(ref_date + timedelta(hours=int(time_comp[d]))))
+
+    return ssrd_comp, dates
+
+
+        # ssrd_reshaped = ssrd_comp.reshape(ssrd_comp.shape[0], -1).T.round(3)
+        #
+        # pd.DataFrame(ssrd_reshaped).to_csv(
+        #     config.file_path_ext_ssd + 'test7.csv', sep=';', encoding='latin1', index=False, header=False,
+        #     quoting=csv.QUOTE_NONE)
+        # test5 = pd.read_csv(config.file_path_ext_ssd + 'test7.csv',
+        #                      error_bad_lines=False, sep=';', encoding='latin1', index_col=False, header=None,
+        #                      dtype='unicode', low_memory=False)
+
+        # test4_org = test5.reshape(
+        #      test5.shape[0], test5.shape[1] // ssrd_comp.shape[2], ssrd_comp.shape[2])
+        #
+        # pd.DataFrame(dates).to_csv(
+        #     config.file_path_ext_ssd + 'dates.csv', sep=';', encoding='latin1', index=False, header=False,
+        #     quoting=csv.QUOTE_NONE)
+        # dates_test = pd.read_csv(config.file_path_ext_ssd + 'dates.csv',
+        #                      error_bad_lines=False, sep=';', encoding='latin1', index_col=False, header=None,
+        #                      dtype='unicode', low_memory=False)
+
+
+def MeterologyVarsLoader(years, var):
+
+    for year in years:
+
+        fn = config.file_path_ext_ssd + 'download' + year + '0102/H_ERA5_ECMW_T639_' + var[0] + '_Euro_025d_S' + year + '01010000_E' + year + '12312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
+        ds = nc.Dataset(fn)
+
+        data_var = ds[var[1]][:].data
+
+
+        unit = ds.variables['time'].units
+        ref_date = datetime(int(unit[12:16]), int(unit[17:19]), int(unit[20:22]))
+        start_date = ref_date + timedelta(hours=int(ds.variables['time'][0]))
+
+        dates = pd.Series(start_date)
+        for d in range(1, len(ds['time'][:].data)):
+            dates = dates.append(pd.Series(ref_date + timedelta(hours=int(ds['time'][:].data[d]))))
+
+    return data_var, dates
+
+            # data_reshaped = data.reshape(data.shape[0], -1).T.round(3)
+            #
+            # pd.DataFrame(data_reshaped).to_csv(
+            #     config.file_path_ext_ssd + var[0] + year + '.csv', sep=';', encoding='latin1', index=False, header=False,
+            #     quoting=csv.QUOTE_NONE)
+            # test5 = pd.read_csv(config.file_path_ext_ssd + var[0] + year + '.csv',
+            #                      error_bad_lines=False, sep=';', encoding='latin1', index_col=False, header=None,
+            #                      dtype='unicode', low_memory=False)
+            # print(11)
+            # test4_org = test5.reshape(
+            #      test5.shape[0], test5.shape[1] // ssrd_comp.shape[2], ssrd_comp.shape[2])
+            #
+            # pd.DataFrame(dates).to_csv(
+            #     config.file_path_ext_ssd + 'dates.csv', sep=';', encoding='latin1', index=False, header=False,
+            #     quoting=csv.QUOTE_NONE)
+            # dates_test = pd.read_csv(config.file_path_ext_ssd + 'dates.csv',
+            #                      error_bad_lines=False, sep=';', encoding='latin1', index_col=False, header=None,
+            #                      dtype='unicode', low_memory=False)
+
+def MeterologyVarsReaderGHI(years):
+
+    for year in years:
+        ind = 0
+        for month in [['01', '02', '0131', '0228'], ['03', '04', '0331', '0430'], ['05', '06', '0531', '0630'], ['07', '08','0731', '0831'],
+                     ['09', '10', '0930', '1031'], ['11', '12', '1130', '1231']]:
+
+            month_start = month[0]
+            month_end = month[1]
+            fn = config.file_path_ext_ssd + 'download' + year + month_start + month_end + '/H_ERA5_ECMW_T639_GHI_0000m_Euro_025d_S' + year + month_start + '010000_E' + year + \
+                 month[2] + '2300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
+            ds = nc.Dataset(fn)
+            fn2 = config.file_path_ext_ssd + 'download' + year + month_start + month_end + '/H_ERA5_ECMW_T639_GHI_0000m_Euro_025d_S' + year + month_end + '010000_E' + year + \
+                  month[3] + '2300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
+            ds2 = nc.Dataset(fn2)
+
+            ssrd = ds['ssrd'][:].data
+            ssrd2 = ds2['ssrd'][:].data
+
+            ssrd_conc = np.concatenate((ssrd, ssrd2))
+            time_conc = np.concatenate((ds['time'][:].data, ds2['time'][:].data))
+
+            if ind == 0:
+                ssrd_comp = ssrd_conc
+                time_comp = time_conc
+
+                unit = ds.variables['time'].units
+                ref_date = datetime(int(unit[12:16]), int(unit[17:19]), int(unit[20:22]))
+                start_date = ref_date + timedelta(hours=int(ds.variables['time'][0]))
+
+                ind = 1
+            else:
+                ssrd_comp = np.concatenate((ssrd_comp, ssrd_conc))
+                time_comp = np.concatenate((time_comp, time_conc))
+
+        dates = pd.Series(start_date)
+        for d in range(1, len(time_comp)):
+            dates = dates.append(pd.Series(ref_date + timedelta(hours=int(time_comp[d]))))
+
+    return ssrd_comp, dates
+
+
+def MeterologyVarsReader(years, var):
+
+    for year in years:
+
+        ind = 0
+
+        if year in ['2019', '2020', '2021', '2021', '2022']:
+
+            for month in [['01', '02', '0131', '0228'], ['03', '04', '0331', '0430'], ['05', '06', '0531', '0630'],
+                              ['07', '08', '0731', '0831'],
+                              ['09', '10', '0930', '1031'], ['11', '12', '1130', '1231']]:
+
+                month_start = month[0]
+                month_end = month[1]
+                fn = config.file_path_ext_ssd + 'download' + year + month_start + month_end + '/H_ERA5_ECMW_T639_' + var[0] + '_0000m_Euro_025d_S' + year + month_start + '010000_E' + year + \
+                        month[2] + '2300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
+                ds = nc.Dataset(fn)
+                fn2 = config.file_path_ext_ssd + 'download' + year + month_start + month_end + '/H_ERA5_ECMW_T639_' + var[0] + '_0000m_Euro_025d_S' + year + month_end + '010000_E' + year + \
+                        month[3] + '2300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
+                ds2 = nc.Dataset(fn2)
+
+                ssrd = ds['ssrd'][:].data
+                ssrd2 = ds2['ssrd'][:].data
+
+                ssrd_conc = np.concatenate((ssrd, ssrd2))
+                time_conc = np.concatenate((ds['time'][:].data, ds2['time'][:].data))
+
+                if ind == 0:
+                    ssrd_comp = ssrd_conc
+                    time_comp = time_conc
+
+                    unit = ds.variables['time'].units
+                    ref_date = datetime(int(unit[12:16]), int(unit[17:19]), int(unit[20:22]))
+                    start_date = ref_date + timedelta(hours=int(ds.variables['time'][0]))
+
+                    ind = 1
+                else:
+                    ssrd_comp = np.concatenate((ssrd_comp, ssrd_conc))
+                    time_comp = np.concatenate((time_comp, time_conc))
+
+            dates = pd.Series(start_date)
+            for d in range(1, len(time_comp)):
+                dates = dates.append(pd.Series(ref_date + timedelta(hours=int(time_comp[d]))))
+
+        else:
+
+            fn = config.file_path_ext_ssd + 'download' + year + '0102/H_ERA5_ECMW_T639_' + var[0] + '_Euro_025d_S' + year + '01010000_E' + year + '12312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
+            ds = nc.Dataset(fn)
+
+            data_var = ds[var[1]][:].data
+
+            unit = ds.variables['time'].units
+            ref_date = datetime(int(unit[12:16]), int(unit[17:19]), int(unit[20:22]))
+            start_date = ref_date + timedelta(hours=int(ds.variables['time'][0]))
+
+            dates = pd.Series(start_date)
+            for d in range(1, len(ds['time'][:].data)):
+                dates = dates.append(pd.Series(ref_date + timedelta(hours=int(ds['time'][:].data[d]))))
+
+    return data_var, dates
+
 
 

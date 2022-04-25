@@ -11,9 +11,8 @@ from dateutil.relativedelta import relativedelta
 import config
 import ETL
 import Preprocessor
-import pickle
-import json
 import csv
+import netCDF4 as nc
 
 if config.ETL:
 
@@ -27,11 +26,35 @@ if config.ETL:
 
     if config.ETL_meteo_vars_API:
 
-        ETL.MeterologyVarsLoaderAPIManually()
+        ETL.MeterologyVarsLoaderAPIManually(2004, 2007)
 
-import netCDF4 as nc
-fn = '/Users/franziska/PycharmProjects/DunkelflauteDescriberAndClassifier/data/download19790102/H_ERA5_ECMW_T639_GHI_0000m_Euro_025d_S197901010000_E197901312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
+    if config.ETL_meteo_vars_Write:
+
+        data_ssrd_1979, dates_ssrd_1979 = ETL.MeterologyVarsLoaderGHI(['1979'])
+
+        data_msl_1979, dates_msl_1979 = ETL.MeterologyVarsLoader(['1979'], ['MSL_0000m', 'msl'])
+        data_ta_1979, dates_ta_1979 = ETL.MeterologyVarsLoader(['1979'], ['TA-_0002m', 't2m'])
+        data_ws10_1979, dates_ws10_1979 = ETL.MeterologyVarsLoader(['1979'], ['WS-_0010m', 'ws10'])
+        data_ws100_1979, dates_ws100_1979 = ETL.MeterologyVarsLoader(['1979'], ['WS-_0100m', 'var_100_metre_wind_speed'])
+
+    if config.ETL_meteo_vars_Reader:
+
+        data_ssrd_1979, dates_ssrd_1979 = ETL.MeterologyVarsReaderGHI(['1979'])
+        data_msl_1979, dates_msl_1979 = ETL.MeterologyVarsReader(['1979'], ['MSL_0000m', 'msl'])
+        data_ta_1979, dates_ta_1979 = ETL.MeterologyVarsReader(['1979'], ['TA-_0002m', 't2m'])
+        data_ws10_1979, dates_ws10_1979 = ETL.MeterologyVarsReader(['1979'], ['WS-_0010m', 'ws10'])
+        data_ws100_1979, dates_ws100_1979 = ETL.MeterologyVarsReader(['1979'], ['WS-_0100m', 'var_100_metre_wind_speed'])
+
+
+year = '1979'
+month = '01'
+month2 = '02'
+end_month = ['0131', '0228', '0331' , '0430', '0531', '0630', '0731', '0831', '0930', '1031', '1130', '1231']
+#fn = '/Users/franziska/PycharmProjects/DunkelflauteDescriberAndClassifier/data/download19790102/H_ERA5_ECMW_T639_GHI_0000m_Euro_025d_S197901010000_E197901312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
+fn = '/Users/franziska/PycharmProjects/DunkelflauteDescriberAndClassifier/data/download' + year + month + month2 + '/H_ERA5_ECMW_T639_GHI_0000m_Euro_025d_S' + year + month + '010000_E' + year + end_month[0] + '2300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
 ds = nc.Dataset(fn)
+fn2 = '/Users/franziska/PycharmProjects/DunkelflauteDescriberAndClassifier/data/download' + year + month + month2 + '/H_ERA5_ECMW_T639_GHI_0000m_Euro_025d_S' + year + month2 + '010000_E' + year + end_month[1] + '2300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
+ds2 = nc.Dataset(fn2)
 
 time = ds['time'][:]
 longitude = ds['longitude'][:]
@@ -39,25 +62,14 @@ latitude = ds['latitude'][:]
 ssrd = ds['ssrd'][:]
 ssrd = ssrd.data
 ssrd_reshaped = ssrd.reshape(ssrd.shape[0], -1).T.round(3)
-#
-# pd.DataFrame(ssrd_reshaped).to_csv(
-#      config.file_path_ext_ssd + 'test3.csv', sep=';', encoding='latin1', index=False, header=False)
-#exp = ssrd_reshaped[:,:]
-pd.DataFrame(ssrd_reshaped).to_csv(
-     config.file_path_ext_ssd + 'test6.csv', sep=';', encoding='latin1', index=False, header=False, quoting=csv.QUOTE_NONE)
-test5 = pd.read_csv(config.file_path_ext_ssd + 'test6.csv',
-                                             error_bad_lines=False, sep=';', encoding='latin1', index_col=False, header=None, dtype='unicode', low_memory=False)
-print(11)
-test4 = pd.read_csv(config.file_path_ext_ssd + 'test3.csv',
-                                             error_bad_lines=False, sep=';', encoding='latin1', index_col=False, header=None, dtype='unicode', low_memory=False)
 
-np.savetxt(config.file_path_ext_ssd + 'test2.txt', ssrd_reshaped)
-print(11)
-#ssrd.data.tofile('test1.csv',sep=',',format='%10.5f')
-test4 = np.loadtxt(config.file_path_ext_ssd + 'test2.txt')
+time2 = ds2['time'][:]
+longitude2 = ds2['longitude'][:]
+latitude2 = ds2['latitude'][:]
+ssrd2 = ds2['ssrd'][:]
+ssrd2 = ssrd2.data
+ssrd_reshaped2 = ssrd2.reshape(ssrd2.shape[0], -1).T.round(3)
 
-test4_org = test4.reshape(
-    test4.shape[0], test4.shape[1] // ssrd.shape[2], ssrd.shape[2])
 
 name = list(ds.variables.values())[3].name
 
@@ -102,6 +114,7 @@ if config.Preprocessor:
     installed_capacity_solar_pv_power = Preprocessor.InstalledCapacityCorrector(solar_pv_wind_power_moving_avg, CFR_sum_solar_wind)
 
     dunkelflaute_date_list = Preprocessor.HistDunkelflauteDetector(installed_capacity_solar_pv_power)
+
 
 
 # sum of capacities below ...% (?)
