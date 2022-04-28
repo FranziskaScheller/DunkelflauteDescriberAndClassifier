@@ -1,7 +1,9 @@
 """
 This script executes the code. It contains the following modules:
 - ETL
--
+- Preprocessor
+- Dunkelflaute Describer
+- Dunkelflaute Classifier
 """
 import pandas as pd
 import numpy as np
@@ -11,6 +13,7 @@ from dateutil.relativedelta import relativedelta
 import config
 import ETL
 import Preprocessor
+import DFDescriber
 import csv
 import netCDF4 as nc
 
@@ -26,7 +29,7 @@ if config.ETL:
 
     if config.ETL_meteo_vars_API:
 
-        ETL.MeterologyVarsLoaderAPIManually(2004, 2007)
+        ETL.MeterologyVarsLoaderAPIManually(2000, 2010)
 
     if config.ETL_meteo_vars_Write:
 
@@ -46,32 +49,32 @@ if config.ETL:
         data_ws100_1979, dates_ws100_1979 = ETL.MeterologyVarsReader(['1979'], ['WS-_0100m', 'var_100_metre_wind_speed'])
 
 
-year = '1979'
-month = '01'
-month2 = '02'
-end_month = ['0131', '0228', '0331' , '0430', '0531', '0630', '0731', '0831', '0930', '1031', '1130', '1231']
-#fn = '/Users/franziska/PycharmProjects/DunkelflauteDescriberAndClassifier/data/download19790102/H_ERA5_ECMW_T639_GHI_0000m_Euro_025d_S197901010000_E197901312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
-fn = '/Users/franziska/PycharmProjects/DunkelflauteDescriberAndClassifier/data/download' + year + month + month2 + '/H_ERA5_ECMW_T639_GHI_0000m_Euro_025d_S' + year + month + '010000_E' + year + end_month[0] + '2300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
-ds = nc.Dataset(fn)
-fn2 = '/Users/franziska/PycharmProjects/DunkelflauteDescriberAndClassifier/data/download' + year + month + month2 + '/H_ERA5_ECMW_T639_GHI_0000m_Euro_025d_S' + year + month2 + '010000_E' + year + end_month[1] + '2300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
-ds2 = nc.Dataset(fn2)
-
-time = ds['time'][:]
-longitude = ds['longitude'][:]
-latitude = ds['latitude'][:]
-ssrd = ds['ssrd'][:]
-ssrd = ssrd.data
-ssrd_reshaped = ssrd.reshape(ssrd.shape[0], -1).T.round(3)
-
-time2 = ds2['time'][:]
-longitude2 = ds2['longitude'][:]
-latitude2 = ds2['latitude'][:]
-ssrd2 = ds2['ssrd'][:]
-ssrd2 = ssrd2.data
-ssrd_reshaped2 = ssrd2.reshape(ssrd2.shape[0], -1).T.round(3)
-
-
-name = list(ds.variables.values())[3].name
+# year = '1979'
+# month = '01'
+# month2 = '02'
+# end_month = ['0131', '0228', '0331' , '0430', '0531', '0630', '0731', '0831', '0930', '1031', '1130', '1231']
+# #fn = '/Users/franziska/PycharmProjects/DunkelflauteDescriberAndClassifier/data/download19790102/H_ERA5_ECMW_T639_GHI_0000m_Euro_025d_S197901010000_E197901312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
+# fn = '/Users/franziska/PycharmProjects/DunkelflauteDescriberAndClassifier/data/download' + year + month + month2 + '/H_ERA5_ECMW_T639_GHI_0000m_Euro_025d_S' + year + month + '010000_E' + year + end_month[0] + '2300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
+# ds = nc.Dataset(fn)
+# fn2 = '/Users/franziska/PycharmProjects/DunkelflauteDescriberAndClassifier/data/download' + year + month + month2 + '/H_ERA5_ECMW_T639_GHI_0000m_Euro_025d_S' + year + month2 + '010000_E' + year + end_month[1] + '2300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
+# ds2 = nc.Dataset(fn2)
+#
+# time = ds['time'][:]
+# longitude = ds['longitude'][:]
+# latitude = ds['latitude'][:]
+# ssrd = ds['ssrd'][:]
+# ssrd = ssrd.data
+# ssrd_reshaped = ssrd.reshape(ssrd.shape[0], -1).T.round(3)
+#
+# time2 = ds2['time'][:]
+# longitude2 = ds2['longitude'][:]
+# latitude2 = ds2['latitude'][:]
+# ssrd2 = ds2['ssrd'][:]
+# ssrd2 = ssrd2.data
+# ssrd_reshaped2 = ssrd2.reshape(ssrd2.shape[0], -1).T.round(3)
+#
+#
+# name = list(ds.variables.values())[3].name
 
 
 #todo: check if sum of capacity of variables < threshold is correct or each of them needs to be
@@ -113,15 +116,26 @@ if config.Preprocessor:
 
     installed_capacity_solar_pv_power = Preprocessor.InstalledCapacityCorrector(solar_pv_wind_power_moving_avg, CFR_sum_solar_wind)
 
-    dunkelflaute_date_list = Preprocessor.HistDunkelflauteDetector(installed_capacity_solar_pv_power)
+    dunkelflaute_date_dict = Preprocessor.HistDunkelflauteDetector(installed_capacity_solar_pv_power, installed_capacity_solar_pv_power.columns[1])
+
+    print(1)
+
+"""
+Plot mean of meteo variables for Dunkelflaute events
+"""
+if config.Describer:
+
+    if config.DescriberMSLPlotter:
+
+        DFDescriber.MeteoVarsPlotter(dunkelflaute_date_dict['DEU'], data_msl_1979, dates_msl_1979, 'msl', longitude, latitude)
+
+
 
 
 
 # sum of capacities below ...% (?)
 
 #ETL.FileDownloadInsights(config.file_path_energy_vars, config.file_names_energy_vars)
-
-
 
 import netCDF4 as nc
 fn = '/Users/franziska/PycharmProjects/DunkelflauteDescriberAndClassifier/download/H_ERA5_ECMW_T639_GHI_0000m_Euro_025d_S197901010000_E197901312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'

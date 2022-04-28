@@ -93,6 +93,16 @@ def FileDownloadInsights(path, file_names):
         print(list(ds.variables.values())[3].name)
 
 def MeterologyVarsLoaderAPI():
+    """
+    This function executes the API to load the meteorology variables
+    - '2m_air_temperature'
+    - 'pressure_at_sea_level'
+    - 'surface_downwelling_shortwave_radiation'
+    - 'wind_speed_at_100m'
+    - 'wind_speed_at_10m'
+    from the cds website.
+    The zip files are stored directly in the project folder.
+    """
     import cdsapi
     c = cdsapi.Client()
 
@@ -128,7 +138,7 @@ def MeterologyVarsLoaderAPIManually(year_start, year_end):
 
     for years in years_api:
         #name = config.file_path_ext_ssd + 'download' + years + '0506.zip'
-        name = 'download' + years + '0102.zip'
+        name = 'download' + years + '0910.zip'
         c.retrieve(
                     'sis-energy-derived-reanalysis',
                     {
@@ -140,7 +150,7 @@ def MeterologyVarsLoaderAPIManually(year_start, year_end):
                         'spatial_aggregation': 'original_grid',
                         'temporal_aggregation': 'hourly',
                         'year': years,
-                        'month': ['01', '02', ],
+                        'month': ['09', '10', ],
                     },
                     name)
 
