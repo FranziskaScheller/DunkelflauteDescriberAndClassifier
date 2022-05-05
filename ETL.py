@@ -138,7 +138,7 @@ def MeterologyVarsLoaderAPIManually(year_start, year_end):
 
     for years in years_api:
         #name = config.file_path_ext_ssd + 'download' + years + '0506.zip'
-        name = 'download' + years + '0910.zip'
+        name = 'download' + years + '0102.zip'
         c.retrieve(
                     'sis-energy-derived-reanalysis',
                     {
@@ -150,7 +150,7 @@ def MeterologyVarsLoaderAPIManually(year_start, year_end):
                         'spatial_aggregation': 'original_grid',
                         'temporal_aggregation': 'hourly',
                         'year': years,
-                        'month': ['09', '10', ],
+                        'month': ['01', '02', ],
                     },
                     name)
 
@@ -302,11 +302,10 @@ def MeterologyVarsReaderGHI(years):
 
 
 def MeterologyVarsReader(years, var):
-
+    ind2 = 0
     for year in years:
 
         ind = 0
-
         if year in ['2019', '2020', '2021', '2021', '2022']:
 
             for month in [['01', '02', '0131', '0228'], ['03', '04', '0331', '0430'], ['05', '06', '0531', '0630'],
@@ -347,7 +346,7 @@ def MeterologyVarsReader(years, var):
 
         else:
 
-            fn = config.file_path_ext_ssd + 'download' + year + '0102/H_ERA5_ECMW_T639_' + var[0] + '_Euro_025d_S' + year + '01010000_E' + year + '12312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
+            fn = config.file_path_ext_ssd + 'download' + str(year) + '0102/H_ERA5_ECMW_T639_' + str(var[0]) + '_Euro_025d_S' + str(year) + '01010000_E' + str(year) + '12312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
             ds = nc.Dataset(fn)
 
             data_var = ds[var[1]][:].data
@@ -360,7 +359,16 @@ def MeterologyVarsReader(years, var):
             for d in range(1, len(ds['time'][:].data)):
                 dates = dates.append(pd.Series(ref_date + timedelta(hours=int(ds['time'][:].data[d]))))
 
-    return data_var, dates
+        if ind2 == 0:
+            data_var_all = data_var
+            dates_all = dates
+            ind2 = 1
+        else:
+            data_var_all = np.concatenate((data_var_all, data_var))
+            dates_all = np.concatenate((dates_all, dates))
+
+
+    return data_var_all, dates_all
 
 
 

@@ -22,6 +22,8 @@ Preprocessor_calc_mov_avg = False
 # If true, the Dunkelflaute Describer is executed
 Describer = True
 # If true, the individual components of the Dunkelflaute Describer is executed
+
+DescriberMSLDataCalculator = True
 DescriberMSLPlotter = True
 DescriberTAPlotter = True
 DescriberWS10Plotter = True
@@ -48,6 +50,8 @@ Dunkelflaute specific arguments
 Capacity_Threshold_DF = 0.1
 Min_length_DF = 24 # in hours
 length_mov_avg_calc_in_days = 30
+
+range_lengths_DF_hist = range(1, 25)
 
 """
 Optional parameters

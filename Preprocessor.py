@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 import config
 
@@ -91,8 +93,11 @@ def HistDunkelflauteDetector(installed_capacity_solar_pv_power, country):
     ind = 0
     for dates in installed_capacity_solar_pv_power_country_df_candidated['Date']:
         range_period_df = pd.date_range(start=dates, end=dates + timedelta(hours=config.Min_length_DF - 1), freq='H')
+        hour_after_range_period_df = dates + timedelta(hours=config.Min_length_DF - 1)
 
-        if pd.DataFrame(range_period_df)[0].isin(installed_capacity_solar_pv_power_country_df_candidated['Date']).all():
+        if (pd.DataFrame(range_period_df)[0].isin(installed_capacity_solar_pv_power_country_df_candidated['Date']).all() &
+                ~(installed_capacity_solar_pv_power_country_df_candidated['Date'].isin(
+                    [hour_after_range_period_df]).any())):
 
             if ind == 0:
                 dunkelflaute_dates_country = range_period_df.values
@@ -105,3 +110,86 @@ def HistDunkelflauteDetector(installed_capacity_solar_pv_power, country):
     np.savetxt('DunkelflauteDates_' + country + '_threshold_' + str(config.Capacity_Threshold_DF) + '.csv', dunkelflaute_dates_country , delimiter = ';'),
 
     return dunkelflaute_dates_country
+
+def HistDunkelflauteDetectorFrequencys(installed_capacity_solar_pv_power, country):
+
+    installed_capacity_solar_pv_power_country = installed_capacity_solar_pv_power[['Date', str(country)]]
+    installed_capacity_solar_pv_power_country_df_candidated = installed_capacity_solar_pv_power_country[installed_capacity_solar_pv_power_country[str(country)] <= config.Capacity_Threshold_DF]
+
+    DF_frequencies = pd.DataFrame(list(config.range_lengths_DF_hist), columns=['LengthsDF'])
+    DF_frequencies['Total_Count'] = np.nan
+    for l in config.range_lengths_DF_hist:
+        counter_df = 0
+        ind = 0
+        for dates in installed_capacity_solar_pv_power_country_df_candidated['Date']:
+            range_period_df = pd.date_range(start=dates, end=dates + timedelta(hours=l - 1), freq='H')
+            hour_after_range_period_df = dates + timedelta(hours=l)
+            hour_before_range_period_df = dates - timedelta(hours=1)
+
+            if (pd.DataFrame(range_period_df)[0].isin(installed_capacity_solar_pv_power_country_df_candidated['Date']).all() &
+                ~(installed_capacity_solar_pv_power_country_df_candidated['Date'].isin(
+                    [hour_after_range_period_df]).any()) & ~(installed_capacity_solar_pv_power_country_df_candidated['Date'].isin(
+                    [hour_before_range_period_df]).any())):
+                counter_df = counter_df + 1
+
+                if ind == 0:
+                    dunkelflaute_dates_country = range_period_df.values
+                    ind = 1
+                else:
+                    dunkelflaute_dates_country = np.append(dunkelflaute_dates_country, range_period_df)
+
+
+        DF_frequencies['Total_Count'][DF_frequencies['LengthsDF'] == l] = counter_df
+
+    DF_frequencies.to_csv('DF_relative_counts_per_nbr_of_hours_' + str(country)+'_.csv', sep=';', encoding='latin1', index=False)
+
+    return DF_frequencies
+
+def HistDunkelflauteDetectorFrequencysAllCountries(installed_capacity_solar_pv_power):
+
+    for country in installed_capacity_solar_pv_power.columns[1:]:
+
+        installed_capacity_solar_pv_power_country = installed_capacity_solar_pv_power[['Date', str(country)]]
+        installed_capacity_solar_pv_power_country_df_candidated = installed_capacity_solar_pv_power_country[installed_capacity_solar_pv_power_country[str(country)] <= config.Capacity_Threshold_DF]
+
+        DF_frequencies = pd.DataFrame(list(config.range_lengths_DF_hist), columns=['LengthsDF'])
+        DF_frequencies[str(country)] = np.nan
+        for l in config.range_lengths_DF_hist:
+            counter_df = 0
+            ind = 0
+            for dates in installed_capacity_solar_pv_power_country_df_candidated['Date']:
+                range_period_df = pd.date_range(start=dates, end=dates + timedelta(hours=l - 1), freq='H')
+                hour_after_range_period_df = dates + timedelta(hours=l)
+                hour_before_range_period_df = dates - timedelta(hours=1)
+
+                if (pd.DataFrame(range_period_df)[0].isin(installed_capacity_solar_pv_power_country_df_candidated['Date']).all() &
+                    ~(installed_capacity_solar_pv_power_country_df_candidated['Date'].isin(
+                        [hour_after_range_period_df]).any()) & ~(installed_capacity_solar_pv_power_country_df_candidated['Date'].isin(
+                        [hour_before_range_period_df]).any())):
+                    counter_df = counter_df + 1
+
+                    if ind == 0:
+                        dunkelflaute_dates_country = range_period_df.values
+                        ind = 1
+                    else:
+                        dunkelflaute_dates_country = np.append(dunkelflaute_dates_country, range_period_df)
+
+
+            DF_frequencies[str(country)][DF_frequencies['LengthsDF'] == l] = counter_df
+
+    DF_frequencies.to_csv('DF_relative_counts_per_nbr_of_hours_all_countries_' + str(datetime.now())+'_.csv', sep=';', encoding='latin1', index=False)
+
+    return DF_frequencies
+
+def HistPlotterDunkelflauteEvents(dunkelflaute_freq_country_i, country_name):
+
+    fig, ax = plt.subplots()
+    sns.histplot(data=dunkelflaute_freq_country_i, x='LengthsDF', weights='Total_Count', kde=True,
+                 bins=len(dunkelflaute_freq_country_i['LengthsDF']))
+    ax.set_ylabel('Frequency')
+    ax.set_xlabel('Hours')
+    plt.title('Histogram of Dunkelflaute events for ' + country_name + ' with capacity threshold ' + str(config.Capacity_Threshold_DF))
+    ax.grid(axis='y')
+    ax.set_facecolor('#d8dcd6')
+    plt.savefig('HistogramOfDunkelflauteEventsFor' + country_name + 'threshold ' + str(config.Capacity_Threshold_DF) + '_'+ str(datetime.today()) + '.png')
+    plt.show()

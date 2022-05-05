@@ -4,6 +4,7 @@ This script executes the code. It contains the following modules:
 - Preprocessor
 - Dunkelflaute Describer
 - Dunkelflaute Classifier
+In the config file it can be specified which part of the code you want to run.
 """
 import pandas as pd
 import numpy as np
@@ -29,7 +30,7 @@ if config.ETL:
 
     if config.ETL_meteo_vars_API:
 
-        ETL.MeterologyVarsLoaderAPIManually(2000, 2010)
+        ETL.MeterologyVarsLoaderAPIManually(2019, 2020)
 
     if config.ETL_meteo_vars_Write:
 
@@ -116,21 +117,34 @@ if config.Preprocessor:
 
     installed_capacity_solar_pv_power = Preprocessor.InstalledCapacityCorrector(solar_pv_wind_power_moving_avg, CFR_sum_solar_wind)
 
-    dunkelflaute_date_dict = Preprocessor.HistDunkelflauteDetector(installed_capacity_solar_pv_power, installed_capacity_solar_pv_power.columns[1])
+    dunkelflaute_dates_country_i = Preprocessor.HistDunkelflauteDetector(installed_capacity_solar_pv_power, 'DE')
 
-    print(1)
+    dunkelflaute_freq_country_i  = Preprocessor.HistDunkelflauteDetectorFrequencys(installed_capacity_solar_pv_power, 'DE')
+
+    Preprocessor.HistPlotterDunkelflauteEvents(pd.read_csv('DF_relative_counts_per_nbr_of_hours_DE_.csv', sep=';', encoding='latin1'), 'Germany(DE)')
+
+    #dunkelflaute_freq_all_countries  = Preprocessor.HistDunkelflauteDetectorFrequencysAllCountries(installed_capacity_solar_pv_power)
 
 """
 Plot mean of meteo variables for Dunkelflaute events
 """
 if config.Describer:
 
+    if config.DescriberMSLDataCalculator:
+
+        DF_Data_all_mean = DFDescriber.MeteoVarssAggregatorForDunkelflauteEvents(installed_capacity_solar_pv_power, ['MSL_0000m', 'msl'], 'DE')
+
     if config.DescriberMSLPlotter:
+        import netCDF4 as nc
 
-        DFDescriber.MeteoVarsPlotter(dunkelflaute_date_dict['DEU'], data_msl_1979, dates_msl_1979, 'msl', longitude, latitude)
+        fn = '/Volumes/PortableSSD/download19790102/H_ERA5_ECMW_T639_GHI_0000m_Euro_025d_S197901010000_E197901312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
+        ds = nc.Dataset(fn)
 
+        time = ds['time'][:]
+        longitude = ds['longitude'][:]
+        latitude = ds['latitude'][:]
 
-
+        DFDescriber.MeteoVarsPlotter(dunkelflaute_dates_country_i, data_msl_1979, dates_msl_1979, 'msl', longitude, latitude)
 
 
 # sum of capacities below ...% (?)
