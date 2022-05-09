@@ -31,18 +31,18 @@ def CFR_Aggregator(solar_pv_power_CFR, wind_power_ons_CFR, wind_power_offs_CFR):
     return CFR_sum_solar_wind
 
 
-def MovingAveragesCalculator(CFR_sum_solar_wind):
+def MovingAveragesCalculator(CFR_data):
 
-    solar_pv_wind_power_moving_avg = pd.DataFrame(CFR_sum_solar_wind['Date'])
+    CFR_rolling_window_mean = pd.DataFrame(CFR_data['Date'])
 
-    solar_pv_wind_power_moving_avg[CFR_sum_solar_wind.columns[1:]] = np.NaN
+    CFR_rolling_window_mean[CFR_data.columns[1:]] = np.NaN
 
     length_mov_avg_calc_in_days_half = int((config.length_mov_avg_calc_in_days)/2)
 
     #for t in range(length_mov_avg_calc_in_days_half*24,length_mov_avg_calc_in_days_half*24 + 365*24,24):
-    for t in range(length_mov_avg_calc_in_days_half * 24, length_mov_avg_calc_in_days_half * 24 + 365 * 24):
-        date_t = CFR_sum_solar_wind['Date'].iloc[t]
-        date_t_s = CFR_sum_solar_wind['Date'].iloc[t-length_mov_avg_calc_in_days_half*24]
+    for t in range((length_mov_avg_calc_in_days_half * 24)-1, (length_mov_avg_calc_in_days_half * 24 + 365 * 24)):
+        date_t = CFR_data['Date'].iloc[t]
+        date_t_s = CFR_data['Date'].iloc[t - length_mov_avg_calc_in_days_half * 24]
 
         date_list = [date_t_s + timedelta(hours=x) for x in range(0,config.length_mov_avg_calc_in_days * 24)]
 
@@ -53,50 +53,85 @@ def MovingAveragesCalculator(CFR_sum_solar_wind):
                 date_list.append(new_date)
                 #print(new_date)
 
-        date_list_mean = [date_t + relativedelta(years=y) for y in range(0,2022-1979)]
+        date_list_mean = [date_t + relativedelta(years=y) for y in range(0, 2022-1979)]
 # todo: check whether every day or every hour is needed
         #date_list_mean = [date_t + relativedelta(years=y) + relativedelta(hours=h) for y in range(0, 2022 - 1979) for h in range(0,23)]
 
         # calculate mean by ignoring nan values
-        mean_l = np.nanmean(CFR_sum_solar_wind[CFR_sum_solar_wind['Date'].isin(date_list)].drop(columns='Date'), axis=0)
+        mean_l = np.nanmean(CFR_data[CFR_data['Date'].isin(date_list)].drop(columns='Date'), axis=0)
 
         for d in date_list_mean:
-            solar_pv_wind_power_moving_avg.loc[solar_pv_wind_power_moving_avg['Date'] == d, CFR_sum_solar_wind.columns[1:]] = mean_l.T
+            CFR_rolling_window_mean.loc[CFR_rolling_window_mean['Date'] == d, CFR_data.columns[1:]] = mean_l.T
 
-    return solar_pv_wind_power_moving_avg
+    date_t = CFR_rolling_window_mean['Date'].iloc[(length_mov_avg_calc_in_days_half * 24) -1]
+    date_start = CFR_rolling_window_mean['Date'].iloc[0]
+    #loc_date_t = CFR_data['Date'].iloc[length_mov_avg_calc_in_days_half * 24].index
+    date_t_plus_one_year = date_t + relativedelta(years=1)
+    date_start_plus_one_year = date_start + relativedelta(years=1)
+    data_fill_up = CFR_rolling_window_mean[( date_start_plus_one_year <= CFR_data['Date']) & (CFR_data['Date'] <= date_t_plus_one_year)]
+    #CFR_rolling_window_mean[CFR_data.columns[1:]].iloc[0:length_mov_avg_calc_in_days_half * 24] = data_fill_up[data_fill_up.columns[1:]]
+    CFR_rolling_window_mean_old = CFR_rolling_window_mean.iloc[length_mov_avg_calc_in_days_half * 24:]
+    CFR_rolling_window_mean_new = pd.DataFrame(
+        CFR_rolling_window_mean['Date'].iloc[0:length_mov_avg_calc_in_days_half * 24])
+    CFR_rolling_window_mean_new[data_fill_up.columns[1:]] = data_fill_up[data_fill_up.columns[1:]].values
 
-def InstalledCapacityCorrector(solar_pv_wind_power_moving_avg, CFR_sum_solar_wind):
+    CFR_rolling_window_mean = CFR_rolling_window_mean_new.append(CFR_rolling_window_mean_old)
+
+    return CFR_rolling_window_mean
+
+def InstalledCapacityCorrector(CFR_moving_avg_df, CFR_df):
     """
     Function that takes the Dataframe containing the mean of the capacities of solar and PV, offshore and onshore wind
     and divides these values by the x- days moving averages of the capacities in order to normalize these values on the
     scale typically for that season of the year
-    :param solar_pv_wind_power_moving_avg:
-    :param CFR_sum_solar_wind:
+    :param CFR_moving_avg_df:
+    :param CFR_df:
     :return:
     """
 
     # in order to prevent from dividing by zero replace zeros by NaN
-    solar_pv_wind_power_moving_avg.replace(0, np.NaN)
+    CFR_moving_avg_df.replace(0, np.NaN)
 
-    installed_capacity_solar_pv_power = CFR_sum_solar_wind[CFR_sum_solar_wind.columns[1:]] / (solar_pv_wind_power_moving_avg[
-        solar_pv_wind_power_moving_avg.columns[1:]].values * 3)
+    installed_capacity_solar_pv_power = CFR_df[CFR_df.columns[1:]] / CFR_moving_avg_df[CFR_moving_avg_df.columns[1:]].values
 
-    installed_capacity_solar_pv_power.insert(loc=0, column='Date', value=CFR_sum_solar_wind['Date'])
+    installed_capacity_solar_pv_power.insert(loc=0, column='Date', value=CFR_df['Date'])
 
     return installed_capacity_solar_pv_power
 
-def HistDunkelflauteDetector(installed_capacity_solar_pv_power, country):
+def HistDunkelflauteDetector(installed_capacity_factor_solar_pv_power, installed_capacity_factor_wind_power_ons, installed_capacity_factor_wind_power_offs, country):
 
-    installed_capacity_solar_pv_power_country = installed_capacity_solar_pv_power[['Date', str(country)]]
-    installed_capacity_solar_pv_power_country_df_candidated = installed_capacity_solar_pv_power_country[installed_capacity_solar_pv_power_country[str(country)] <= config.Capacity_Threshold_DF]
+    # add columns for countries that don't have one specific energy source. Values are zero and therefore don't influence dunkelflaute classification
+    cols_no_offs_wind = installed_capacity_factor_wind_power_ons.columns.difference(installed_capacity_factor_wind_power_offs.columns)
+    installed_capacity_factor_wind_power_offs[cols_no_offs_wind] = 0
+
+    cols_only_offs_wind = installed_capacity_factor_wind_power_offs.columns.difference(installed_capacity_factor_wind_power_ons.columns)
+    installed_capacity_factor_wind_power_ons[cols_only_offs_wind] = 0
+    installed_capacity_factor_solar_pv_power[cols_only_offs_wind] = 0
+
+    installed_capacity_factor_solar_pv_power_country = installed_capacity_factor_solar_pv_power[['Date', str(country)]]
+    installed_capacity_factor_solar_pv_power_country = installed_capacity_factor_solar_pv_power_country.rename(columns={str(country): str(country) + "_solar"})
+
+    installed_capacity_factor_wind_power_ons_country = installed_capacity_factor_wind_power_ons[['Date', str(country)]]
+    installed_capacity_factor_wind_power_ons_country = installed_capacity_factor_wind_power_ons_country.rename(columns={str(country): str(country) + "_wind_ons"})
+
+    installed_capacity_factor_wind_power_offs_country = installed_capacity_factor_wind_power_offs[['Date', str(country)]]
+    installed_capacity_factor_wind_power_offs_country = installed_capacity_factor_wind_power_offs_country.rename(columns={str(country): str(country) + "_wind_offs"})
+
+    installed_capacity_factor_all = installed_capacity_factor_solar_pv_power.merge(installed_capacity_factor_wind_power_ons, on = 'Date', how = 'left')
+    installed_capacity_factor_all = installed_capacity_factor_all.merge(installed_capacity_factor_wind_power_offs, on = 'Date', how = 'left')
+
+    installed_capacity_factor_solar_pv_power_country_df_candidates = installed_capacity_factor_solar_pv_power_country[
+        (installed_capacity_factor_solar_pv_power_country[str(country) + "_solar"] <= config.Capacity_Threshold_DF) &
+        (installed_capacity_factor_solar_pv_power_country[str(country) + "_wind_ons"] <= config.Capacity_Threshold_DF) &
+        (installed_capacity_factor_solar_pv_power_country[str(country) + "_wind_offs"] <= config.Capacity_Threshold_DF)]
 
     ind = 0
-    for dates in installed_capacity_solar_pv_power_country_df_candidated['Date']:
+    for dates in installed_capacity_factor_solar_pv_power_country_df_candidates['Date']:
         range_period_df = pd.date_range(start=dates, end=dates + timedelta(hours=config.Min_length_DF - 1), freq='H')
         hour_after_range_period_df = dates + timedelta(hours=config.Min_length_DF - 1)
 
-        if (pd.DataFrame(range_period_df)[0].isin(installed_capacity_solar_pv_power_country_df_candidated['Date']).all() &
-                ~(installed_capacity_solar_pv_power_country_df_candidated['Date'].isin(
+        if (pd.DataFrame(range_period_df)[0].isin(installed_capacity_factor_solar_pv_power_country_df_candidates['Date']).all() &
+                ~(installed_capacity_factor_solar_pv_power_country_df_candidates['Date'].isin(
                     [hour_after_range_period_df]).any())):
 
             if ind == 0:
@@ -111,24 +146,45 @@ def HistDunkelflauteDetector(installed_capacity_solar_pv_power, country):
 
     return dunkelflaute_dates_country
 
-def HistDunkelflauteDetectorFrequencys(installed_capacity_solar_pv_power, country):
+def FrequencyCalculatorCFRBelowThreshold(installed_capacity_factor_solar_pv_power, installed_capacity_factor_wind_power_ons, installed_capacity_factor_wind_power_offs, country, threshold):
 
-    installed_capacity_solar_pv_power_country = installed_capacity_solar_pv_power[['Date', str(country)]]
-    installed_capacity_solar_pv_power_country_df_candidated = installed_capacity_solar_pv_power_country[installed_capacity_solar_pv_power_country[str(country)] <= config.Capacity_Threshold_DF]
+    cols_no_offs_wind = installed_capacity_factor_wind_power_ons.columns.difference(installed_capacity_factor_wind_power_offs.columns)
+    installed_capacity_factor_wind_power_offs[cols_no_offs_wind] = 0
+
+    cols_only_offs_wind = installed_capacity_factor_wind_power_offs.columns.difference(installed_capacity_factor_wind_power_ons.columns)
+    installed_capacity_factor_wind_power_ons[cols_only_offs_wind] = 0
+    installed_capacity_factor_solar_pv_power[cols_only_offs_wind] = 0
+
+    installed_capacity_factor_solar_pv_power_country = installed_capacity_factor_solar_pv_power[['Date', str(country)]]
+    installed_capacity_factor_solar_pv_power_country = installed_capacity_factor_solar_pv_power_country.rename(columns={str(country): str(country) + "_solar"})
+
+    installed_capacity_factor_wind_power_ons_country = installed_capacity_factor_wind_power_ons[['Date', str(country)]]
+    installed_capacity_factor_wind_power_ons_country = installed_capacity_factor_wind_power_ons_country.rename(columns={str(country): str(country) + "_wind_ons"})
+
+    installed_capacity_factor_wind_power_offs_country = installed_capacity_factor_wind_power_offs[['Date', str(country)]]
+    installed_capacity_factor_wind_power_offs_country = installed_capacity_factor_wind_power_offs_country.rename(columns={str(country): str(country) + "_wind_offs"})
+
+    installed_capacity_factor_all = installed_capacity_factor_solar_pv_power.merge(installed_capacity_factor_wind_power_ons, on = 'Date', how = 'left')
+    installed_capacity_factor_all = installed_capacity_factor_all.merge(installed_capacity_factor_wind_power_offs, on = 'Date', how = 'left')
+
+    installed_capacity_factor_solar_pv_power_country_df_candidates = installed_capacity_factor_solar_pv_power_country[
+        (installed_capacity_factor_solar_pv_power_country[str(country) + "_solar"] <= config.Capacity_Threshold_DF) &
+        (installed_capacity_factor_solar_pv_power_country[str(country) + "_wind_ons"] <= config.Capacity_Threshold_DF) &
+        (installed_capacity_factor_solar_pv_power_country[str(country) + "_wind_offs"] <= config.Capacity_Threshold_DF)]
 
     DF_frequencies = pd.DataFrame(list(config.range_lengths_DF_hist), columns=['LengthsDF'])
     DF_frequencies['Total_Count'] = np.nan
     for l in config.range_lengths_DF_hist:
         counter_df = 0
         ind = 0
-        for dates in installed_capacity_solar_pv_power_country_df_candidated['Date']:
+        for dates in installed_capacity_factor_solar_pv_power_country_df_candidates['Date']:
             range_period_df = pd.date_range(start=dates, end=dates + timedelta(hours=l - 1), freq='H')
             hour_after_range_period_df = dates + timedelta(hours=l)
             hour_before_range_period_df = dates - timedelta(hours=1)
 
-            if (pd.DataFrame(range_period_df)[0].isin(installed_capacity_solar_pv_power_country_df_candidated['Date']).all() &
-                ~(installed_capacity_solar_pv_power_country_df_candidated['Date'].isin(
-                    [hour_after_range_period_df]).any()) & ~(installed_capacity_solar_pv_power_country_df_candidated['Date'].isin(
+            if (pd.DataFrame(range_period_df)[0].isin(installed_capacity_factor_solar_pv_power_country_df_candidates['Date']).all() &
+                ~(installed_capacity_factor_solar_pv_power_country_df_candidates['Date'].isin(
+                    [hour_after_range_period_df]).any()) & ~(installed_capacity_factor_solar_pv_power_country_df_candidates['Date'].isin(
                     [hour_before_range_period_df]).any())):
                 counter_df = counter_df + 1
 
@@ -141,7 +197,7 @@ def HistDunkelflauteDetectorFrequencys(installed_capacity_solar_pv_power, countr
 
         DF_frequencies['Total_Count'][DF_frequencies['LengthsDF'] == l] = counter_df
 
-    DF_frequencies.to_csv('DF_relative_counts_per_nbr_of_hours_' + str(country)+'_.csv', sep=';', encoding='latin1', index=False)
+    DF_frequencies.to_csv('CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_' + str(country) + '_' + str(threshold) + '.csv', sep=';', encoding='latin1', index=False)
 
     return DF_frequencies
 
@@ -185,10 +241,11 @@ def HistPlotterDunkelflauteEvents(dunkelflaute_freq_country_i, country_name):
 
     fig, ax = plt.subplots()
     sns.histplot(data=dunkelflaute_freq_country_i, x='LengthsDF', weights='Total_Count', kde=True,
-                 bins=len(dunkelflaute_freq_country_i['LengthsDF']))
+                 bins=len(dunkelflaute_freq_country_i['LengthsDF']), discrete=True)
     ax.set_ylabel('Frequency')
     ax.set_xlabel('Hours')
-    plt.title('Histogram of Dunkelflaute events for ' + country_name + ' with capacity threshold ' + str(config.Capacity_Threshold_DF))
+    plt.title('Histogram of events for ' + country_name + ' where the adjusted capacity factor ratios for solar and wind'
+                    ' (on- and offshore) fall below the capacity threshold ' + str(config.Capacity_Threshold_DF) + 'for exactly x hours in a row')
     ax.grid(axis='y')
     ax.set_facecolor('#d8dcd6')
     plt.savefig('HistogramOfDunkelflauteEventsFor' + country_name + 'threshold ' + str(config.Capacity_Threshold_DF) + '_'+ str(datetime.today()) + '.png')

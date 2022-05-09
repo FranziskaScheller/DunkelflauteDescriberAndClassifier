@@ -18,6 +18,7 @@ ETL_meteo_vars_Reader = False
 # If true, the Preprocessor is executed
 Preprocessor = True
 Preprocessor_calc_mov_avg = False
+Preprocessor_read_data_mov_avg = True
 
 # If true, the Dunkelflaute Describer is executed
 Describer = True
@@ -47,11 +48,11 @@ file_path = '/Users/franziska/PycharmProjects/DunkelflauteDescriberAndClassifier
 """
 Dunkelflaute specific arguments 
 """
-Capacity_Threshold_DF = 0.1
+Capacity_Threshold_DF = 0.2
 Min_length_DF = 24 # in hours
 length_mov_avg_calc_in_days = 30
 
-range_lengths_DF_hist = range(1, 25)
+range_lengths_DF_hist = range(1, 72)
 
 """
 Optional parameters
