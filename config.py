@@ -19,7 +19,8 @@ ETL_meteo_vars_Reader = False
 Preprocessor = True
 Preprocessor_calc_mov_avg = False
 Preprocessor_read_data_mov_avg = True
-
+Preprocessor_installed_capacity_corrector = True
+calc_summary_measures = False
 # If true, the Dunkelflaute Describer is executed
 Describer = True
 # If true, the individual components of the Dunkelflaute Describer is executed
@@ -52,8 +53,8 @@ Capacity_Threshold_DF = 0.2
 Min_length_DF = 24 # in hours
 length_mov_avg_calc_in_days = 30
 
+#range_lengths_DF_hist = range(1, 72)
 range_lengths_DF_hist = range(1, 72)
-
 """
 Optional parameters
 """
