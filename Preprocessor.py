@@ -82,6 +82,54 @@ def MovingAveragesCalculator(CFR_data):
 
     return CFR_rolling_window_mean
 
+def MovingAveragesCalculatorSolarPVHourly2(CFR_data):
+
+    CFR_rolling_window_mean = pd.DataFrame(CFR_data['Date'])
+
+    CFR_rolling_window_mean[CFR_data.columns[1:]] = np.NaN
+
+    length_mov_avg_calc_in_days_half = int((config.length_mov_avg_calc_in_days)/2)
+
+    #for t in range(length_mov_avg_calc_in_days_half*24,length_mov_avg_calc_in_days_half*24 + 365*24,24):
+    for t in range((length_mov_avg_calc_in_days_half * 24)-1, (length_mov_avg_calc_in_days_half * 24 + 365 * 24)):
+        date_t = CFR_data['Date'].iloc[t]
+        date_t_s = CFR_data['Date'].iloc[t - length_mov_avg_calc_in_days_half * 24]
+
+        date_list = [date_t_s + timedelta(hours=x) for x in range(0, config.length_mov_avg_calc_in_days * 24, 24)]
+
+        l = len(date_list) - 1
+        for x in range(0, l):
+            for y in range(1, 2022 - 1979):
+                new_date = date_list[x] + relativedelta(years=y)
+                date_list.append(new_date)
+                #print(new_date)
+
+        date_list_mean = [date_t + relativedelta(years=y) for y in range(0, 2022-1979)]
+# todo: check whether every day or every hour is needed
+        #date_list_mean = [date_t + relativedelta(years=y) + relativedelta(hours=h) for y in range(0, 2022 - 1979) for h in range(0,23)]
+
+        # calculate mean by ignoring nan values
+        mean_l = np.nanmean(CFR_data[CFR_data['Date'].isin(date_list)].drop(columns='Date'), axis=0)
+
+        for d in date_list_mean:
+            CFR_rolling_window_mean.loc[CFR_rolling_window_mean['Date'] == d, CFR_data.columns[1:]] = mean_l.T
+
+    date_t = CFR_rolling_window_mean['Date'].iloc[(length_mov_avg_calc_in_days_half * 24) -1]
+    date_start = CFR_rolling_window_mean['Date'].iloc[0]
+    #loc_date_t = CFR_data['Date'].iloc[length_mov_avg_calc_in_days_half * 24].index
+    date_t_plus_one_year = date_t + relativedelta(years=1)
+    date_start_plus_one_year = date_start + relativedelta(years=1)
+    data_fill_up = CFR_rolling_window_mean[( date_start_plus_one_year <= CFR_data['Date']) & (CFR_data['Date'] <= date_t_plus_one_year)]
+    #CFR_rolling_window_mean[CFR_data.columns[1:]].iloc[0:length_mov_avg_calc_in_days_half * 24] = data_fill_up[data_fill_up.columns[1:]]
+    CFR_rolling_window_mean_old = CFR_rolling_window_mean.iloc[length_mov_avg_calc_in_days_half * 24:]
+    CFR_rolling_window_mean_new = pd.DataFrame(
+        CFR_rolling_window_mean['Date'].iloc[0:length_mov_avg_calc_in_days_half * 24])
+    CFR_rolling_window_mean_new[data_fill_up.columns[1:]] = data_fill_up[data_fill_up.columns[1:]].values
+
+    CFR_rolling_window_mean = CFR_rolling_window_mean_new.append(CFR_rolling_window_mean_old)
+
+    return CFR_rolling_window_mean
+
 def MovingAveragesCalculatorSolarPV(CFR_data):
 
     CFR_data_h_21_to_4 = CFR_data[(CFR_data['Date'].apply(lambda x: x.hour).isin([18, 19, 20, 21, 22, 23, 0, 1, 2, 3, 4, 5, 6, 7]))]
@@ -410,7 +458,7 @@ def FrequencyCalculatorCFRBelowSeveralThresholds(installed_capacity_factor_solar
 
             DF_frequencies[str(th)][DF_frequencies['LengthsDF'] == l] = counter_df
 
-    DF_frequencies.to_csv('CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_' + str(country) + 'severl_thresholds.csv', sep=';', encoding='latin1', index=False)
+        DF_frequencies.to_csv('CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_' + str(country) + 'several_thresholds.csv', sep=';', encoding='latin1', index=False)
 
     return DF_frequencies
 
@@ -491,7 +539,7 @@ def FrequencyCalculatorCFRBelowThresholdOneEnergyVariableOneThresholds(installed
 
         DF_frequencies[str(threshold)][DF_frequencies['LengthsDF'] == l] = counter_df
 
-        DF_frequencies.to_csv(config.file_path_ext_ssd + 'CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_' + str(country) + var_type + str(threshold) +'_threshold.csv', sep=';', encoding='latin1', index=False)
+        DF_frequencies.to_csv('CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_' + str(country) + var_type + str(threshold) +'_threshold.csv', sep=';', encoding='latin1', index=False)
 
     return DF_frequencies
 
@@ -510,9 +558,9 @@ def FrequencyCalculatorCFRBelowThresholdSolarPVOneThresholds(installed_capacity_
 
     #CFR_data_h_5_to_20 = CFR_data[(CFR_data['Date'].apply(lambda x: x.hour).isin([x for x in range(5, 21)]))]
 
+    ind = 0
     for l in config.range_lengths_DF_hist:
         counter_df = 0
-        ind = 0
         print(l)
         for dates in installed_capacity_factor_solar_pv_power_country_df_candidates_day['Date']:
             range_period_df = pd.date_range(start=dates, end=dates + timedelta(hours=l - 1), freq='H')
