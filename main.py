@@ -17,21 +17,22 @@ import Preprocessor
 import DFDescriber
 import csv
 import netCDF4 as nc
+from sklearn.linear_model import LinearRegression
 
-import cdsapi
-
-c = cdsapi.Client()
-
-c.retrieve(
-    'sis-energy-derived-reanalysis',
-    {
-        'variable': 'wind_power_generation_onshore',
-        'spatial_aggregation': 'sub_country_level',
-        'energy_product_type': 'capacity_factor_ratio',
-        'temporal_aggregation': 'hourly',
-        'format': 'zip',
-    },
-    'downloadnuts02.zip')
+# import cdsapi
+#
+# c = cdsapi.Client()
+#
+# c.retrieve(
+#     'sis-energy-derived-reanalysis',
+#     {
+#         'variable': 'wind_power_generation_offshore',
+#         'spatial_aggregation': 'maritime_sub_country_level',
+#         'energy_product_type': 'capacity_factor_ratio',
+#         'temporal_aggregation': 'hourly',
+#         'format': 'zip',
+#     },
+#     'download03.zip')
 print(1)
 # import cdsapi
 #
@@ -88,6 +89,57 @@ if config.ETL:
         data_ta_1979, dates_ta_1979 = ETL.MeterologyVarsReader(['1979'], ['TA-_0002m', 't2m'])
         data_ws10_1979, dates_ws10_1979 = ETL.MeterologyVarsReader(['1979'], ['WS-_0010m', 'ws10'])
         data_ws100_1979, dates_ws100_1979 = ETL.MeterologyVarsReader(['1979'], ['WS-_0100m', 'var_100_metre_wind_speed'])
+
+
+    if config.ETL_RegressionCorrection:
+
+        wind_ons_CFR_nuts02 = pd.read_csv('H_ERA5_ECMW_T639_WON_0100m_Euro_NUT2_S197901010000_E202204302300_CFR_TIM_01h_NA-_noc_org_NA_NA---_NA---_PhM01.csv', skiprows=lambda x: x in range(0, 52))
+        wind_ons_CFR_nuts02 = wind_ons_CFR_nuts02.drop_duplicates()
+        wind_ons_CFR_nuts02['Date'] = wind_ons_CFR_nuts02['Date'].apply(
+            lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
+        wind_ons_CFR_nuts02_20_21 = wind_ons_CFR_nuts02[
+            (wind_ons_CFR_nuts02['Date'].dt.year <= 2021) & (wind_ons_CFR_nuts02['Date'].dt.year >= 2020)].reset_index().drop(columns = 'index')
+
+        wind_offs_CFR_nuts02 = pd.read_csv('H_ERA5_ECMW_T639_WOF_0100m_Euro_MAR1_S197901010000_E202205312300_CFR_TIM_01h_NA-_noc_org_NA_NA---_NA---_PhM01.csv', skiprows=lambda x: x in range(0, 52))
+        wind_offs_CFR_nuts02 = wind_offs_CFR_nuts02.drop_duplicates()
+        wind_offs_CFR_nuts02['Date'] = wind_offs_CFR_nuts02['Date'].apply(
+            lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
+        wind_offs_CFR_nuts02_20_21 = wind_offs_CFR_nuts02[
+            (wind_offs_CFR_nuts02['Date'].dt.year <= 2021) & (wind_offs_CFR_nuts02['Date'].dt.year >= 2020)].reset_index().drop(columns = 'index')
+
+        wind_act_gen20DE = pd.read_csv('ENTSOEActGenWind/Actual Generation per Production Type_202001010000-202101010000DE.csv',
+                                                    sep=',')
+        wind_act_gen21DE = pd.read_csv('ENTSOEActGenWind/Actual Generation per Production Type_202101010000-202201010000DE.csv',
+                                                    sep=',')
+        wind_act_genDE = wind_act_gen20DE.append(wind_act_gen21DE)
+        wind_act_genDE = wind_act_genDE[
+            ['MTU', 'Wind Offshore  - Actual Aggregated [MW]', 'Wind Onshore  - Actual Aggregated [MW]']]
+
+        wind_act_genDE['Time'] = pd.to_datetime(wind_act_genDE['MTU'].str[0:10] + ' ' + wind_act_genDE['MTU'].str[11:16] , format = '%d.%m.%Y %H:%M')
+        wind_act_genDE = wind_act_genDE.drop(columns = 'MTU')
+        wind_act_genDE['Time'] = pd.Series(wind_act_genDE['Time'].apply(lambda x: x.floor('H')))
+        wind_act_genDE_aggr = wind_act_genDE.groupby(by=['Time']).mean().reset_index()
+        wind_act_genDE_aggr_max_ons = wind_act_genDE_aggr['Wind Onshore  - Actual Aggregated [MW]'].max()
+        wind_act_genDE_aggr_max_offs = wind_act_genDE_aggr['Wind Offshore  - Actual Aggregated [MW]'].max()
+        wind_act_genDE_aggr['Wind Onshore  - Actual Aggregated [MW]'] = wind_act_genDE_aggr['Wind Onshore  - Actual Aggregated [MW]']/wind_act_genDE_aggr_max_ons
+        wind_act_genDE_aggr['Wind Offshore  - Actual Aggregated [MW]'] = wind_act_genDE_aggr[
+                                                                            'Wind Offshore  - Actual Aggregated [MW]'] / wind_act_genDE_aggr_max_offs
+
+        #todo: check if we can aggregate with mean or sum
+        y_wind_ons = wind_act_genDE_aggr['Wind Onshore  - Actual Aggregated [MW]']
+        X_wind_ons = wind_ons_CFR_nuts02_20_21[wind_ons_CFR_nuts02_20_21.columns[64:102]]
+        X_wind_ons = X_wind_ons.dropna(axis = 1, how = 'all')
+        regr_wind_ons = LinearRegression().fit(X_wind_ons, y_wind_ons)
+        weights_regr_wind_ons = regr_wind_ons.coef_
+        intercept_regr_wind_ons = regr_wind_ons.intercept_
+
+        y_wind_offs = wind_act_genDE_aggr['Wind Offshore  - Actual Aggregated [MW]']
+        X_wind_offs = wind_offs_CFR_nuts02_20_21[wind_offs_CFR_nuts02_20_21.columns[7:10]]
+        X_wind_offs = X_wind_offs.dropna(axis = 1, how = 'all')
+        regr_wind_offs = LinearRegression().fit(X_wind_offs, y_wind_offs)
+        weights_regr_wind_offs = regr_wind_offs.coef_
+        intercept_regr_wind_offs = regr_wind_offs.intercept_
+        print(1)
 
 #todo: check if sum of capacity of variables < threshold is correct or each of them needs to be
 """

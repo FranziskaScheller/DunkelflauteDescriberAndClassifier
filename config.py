@@ -14,6 +14,7 @@ ETL_meteo_vars = False
 ETL_meteo_vars_API = False
 ETL_meteo_vars_Write = False
 ETL_meteo_vars_Reader = False
+ETL_RegressionCorrection = True
 
 # If true, the Preprocessor is executed
 Preprocessor = True
