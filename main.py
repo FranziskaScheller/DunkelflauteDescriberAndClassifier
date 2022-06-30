@@ -68,6 +68,7 @@ if config.ETL:
         # Note: zeros are just empty entries in csv and therefore 'nan', so we fill nan's with zero for solar/PV
         # for wind this problem doesn't occur because then very small values (such as 0.00001) are given
         solar_pv_power_CFR = solar_pv_power_CFR.fillna(0)
+        solar_pv_power_CFR = solar_pv_power_CFR[solar_pv_power_CFR['Date'].dt.year <= 2021]
 
     if config.ETL_meteo_vars_API:
 
@@ -97,6 +98,7 @@ if config.ETL:
         wind_ons_CFR_nuts02 = wind_ons_CFR_nuts02.drop_duplicates()
         wind_ons_CFR_nuts02['Date'] = wind_ons_CFR_nuts02['Date'].apply(
             lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
+        wind_ons_CFR_nuts02 = wind_ons_CFR_nuts02[wind_ons_CFR_nuts02['Date'].dt.year <= 2021]
         wind_ons_CFR_nuts02_20_21 = wind_ons_CFR_nuts02[
             (wind_ons_CFR_nuts02['Date'].dt.year <= 2021) & (wind_ons_CFR_nuts02['Date'].dt.year >= 2020)].reset_index().drop(columns = 'index')
 
@@ -104,6 +106,7 @@ if config.ETL:
         wind_offs_CFR_nuts02 = wind_offs_CFR_nuts02.drop_duplicates()
         wind_offs_CFR_nuts02['Date'] = wind_offs_CFR_nuts02['Date'].apply(
             lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
+        wind_offs_CFR_nuts02 = wind_offs_CFR_nuts02[wind_offs_CFR_nuts02['Date'].dt.year <= 2021]
         wind_offs_CFR_nuts02_20_21 = wind_offs_CFR_nuts02[
             (wind_offs_CFR_nuts02['Date'].dt.year <= 2021) & (wind_offs_CFR_nuts02['Date'].dt.year >= 2020)].reset_index().drop(columns = 'index')
 
@@ -129,17 +132,39 @@ if config.ETL:
         y_wind_ons = wind_act_genDE_aggr['Wind Onshore  - Actual Aggregated [MW]']
         X_wind_ons = wind_ons_CFR_nuts02_20_21[wind_ons_CFR_nuts02_20_21.columns[64:102]]
         X_wind_ons = X_wind_ons.dropna(axis = 1, how = 'all')
-        regr_wind_ons = LinearRegression().fit(X_wind_ons, y_wind_ons)
+
+        X_wind_ons_all = wind_ons_CFR_nuts02[wind_ons_CFR_nuts02.columns[64:102]]
+        X_wind_ons_all = X_wind_ons_all.dropna(axis=1, how='all')
+
+        regr_wind_ons = LinearRegression(fit_intercept=False, positive=True).fit(X_wind_ons, y_wind_ons)
         weights_regr_wind_ons = regr_wind_ons.coef_
-        intercept_regr_wind_ons = regr_wind_ons.intercept_
+        #intercept_regr_wind_ons = regr_wind_ons.intercept_
 
         y_wind_offs = wind_act_genDE_aggr['Wind Offshore  - Actual Aggregated [MW]']
         X_wind_offs = wind_offs_CFR_nuts02_20_21[wind_offs_CFR_nuts02_20_21.columns[7:10]]
         X_wind_offs = X_wind_offs.dropna(axis = 1, how = 'all')
-        regr_wind_offs = LinearRegression().fit(X_wind_offs, y_wind_offs)
+
+        X_wind_offs_all = wind_offs_CFR_nuts02[wind_offs_CFR_nuts02.columns[7:10]]
+        X_wind_offs_all = X_wind_offs_all.dropna(axis = 1, how = 'all')
+
+        regr_wind_offs = LinearRegression(fit_intercept=False,positive=True).fit(X_wind_offs, y_wind_offs)
         weights_regr_wind_offs = regr_wind_offs.coef_
-        intercept_regr_wind_offs = regr_wind_offs.intercept_
-        print(1)
+        #intercept_regr_wind_offs = regr_wind_offs.intercept_
+
+        # X_wind_ons = np.insert(X_wind_ons, [0], np.ones(len(X_wind_ons)))
+        # X_wind_ons = X_wind_ons.insert(0, 'intercept', 1)
+        # X_wind_offs = X_wind_offs.insert(0, 'intercept', 1)
+        # coeffs_ons_wind = np.insert(weights_regr_wind_ons, [0], intercept_regr_wind_ons)
+        # coeffs_offs_wind = np.insert(weights_regr_wind_offs, [0], intercept_regr_wind_offs)
+        new_CFRs_onshore_wind = pd.DataFrame(np.dot(X_wind_ons_all, weights_regr_wind_ons), columns = ['DE'])
+        new_CFRs_onshore_wind.insert(0, 'Date', wind_ons_CFR_nuts02['Date'].reset_index().drop(columns = 'index'))
+        new_CFRs_offshore_wind = pd.DataFrame(np.dot(X_wind_offs_all, weights_regr_wind_offs), columns = ['DE'])
+        new_CFRs_offshore_wind.insert(0, 'Date', wind_offs_CFR_nuts02['Date'].reset_index().drop(columns = 'index'))
+        new_CFRs_onshore_wind.to_csv(
+            'new_CFRs_onshore_wind.csv', sep=';', encoding='latin1', index=False)
+        new_CFRs_offshore_wind.to_csv(
+            'new_CFRs_offshore_wind.csv', sep=';', encoding='latin1', index=False)
+
 
 #todo: check if sum of capacity of variables < threshold is correct or each of them needs to be
 """
@@ -192,23 +217,24 @@ if config.Preprocessor:
         #    'solar_pv_power_CFR_moving_avg.csv', sep=';', encoding='latin1', index=False)
         #solar_pv_power_CFR_moving_avg_h = Preprocessor.MovingAveragesCalculatorSolarPVHourly(solar_pv_power_CFR)
 
+        # This is current function
         solar_pv_power_CFR_moving_avg_h2 = Preprocessor.MovingAveragesCalculatorSolarPVHourly2(solar_pv_power_CFR)
 
         solar_pv_power_CFR_moving_avg_h2.to_csv(
-            'solar_pv_power_CFR_moving_avg_h2.csv', sep=';', encoding='latin1', index=False)
+             'solar_pv_power_CFR_moving_avg_h2.csv', sep=';', encoding='latin1', index=False)
 
-        wind_power_ons_moving_avg = Preprocessor.MovingAveragesCalculator(wind_power_ons_CFR)
+        wind_power_ons_moving_avg = Preprocessor.MovingAveragesCalculator(new_CFRs_onshore_wind)
         wind_power_ons_moving_avg.to_csv('wind_power_ons_moving_avg.csv', sep=';', encoding='latin1', index=False)
         # wind_power_ons_moving_avg.to_csv(
         #     config.file_path_ext_ssd + 'wind_power_ons_moving_avg.csv', sep=';', encoding='latin1', index=False)
 
-        wind_power_offs_moving_avg = Preprocessor.MovingAveragesCalculator(wind_power_offs_CFR)
+        wind_power_offs_moving_avg = Preprocessor.MovingAveragesCalculator(new_CFRs_offshore_wind)
         wind_power_offs_moving_avg.to_csv('wind_power_offs_moving_avg.csv', sep=';', encoding='latin1', index=False)
 #        wind_power_offs_moving_avg.to_csv(
 #            config.file_path_ext_ssd + 'wind_power_offs_moving_avg.csv', sep=';', encoding='latin1', index=False)
 
         # solar_pv_wind_power_moving_avg.to_csv(config.file_path + 'solar_pv_wind_power_moving_avg.csv')
-
+        print(1)
     if config.Preprocessor_read_data_mov_avg:
         solar_pv_power_CFR_moving_avg = pd.read_csv('solar_pv_power_CFR_moving_avg_h2.csv', error_bad_lines=False,
                                                     sep=';', encoding='latin1', index_col=False)
