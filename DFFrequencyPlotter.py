@@ -11,8 +11,7 @@ def HistPlotterOneVar(data, country, variable, threshold):
             dunkelflaute_freq_country_i[dunkelflaute_freq_country_i.columns[1]])
     ax.set_ylabel('Frequency (of CF <= threshold for exactly x hours)', fontsize=10)
     ax.set_xlabel('Hours', fontsize=10)
-    plt.title('Frequency of events in ' + country + ' where adjusted ' + variable +' CF '
-                                                         'fall below threshold ' + threshold + ' x hours in a row',
+    plt.title('Frequency of dunkelflaute events in ' + country + ' where all CFs fall below threshold ' + threshold + ' x hours in a row',
               fontsize=15)
     ax.grid(axis='y')
     ax.set_facecolor('#d8dcd6')
@@ -99,8 +98,10 @@ def DFHoursPerYear(df_HoursPerYearCountryi1, df_HoursPerYearCountryi2, df_HoursP
     return df_HoursPerYear
 
 # Germany
-df_DE_03 = pd.read_csv('CFR_frequencys/CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_DE_0.3_0.3_0.3.csv', error_bad_lines=False, sep=';', encoding = 'latin1', index_col= False, low_memory=False)
-df_DE_05 = pd.read_csv('CFR_frequencys/CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_DE_0.5_0.5_0.5.csv', error_bad_lines=False, sep=';', encoding = 'latin1', index_col= False, low_memory=False)
+#df_DE_03 = pd.read_csv('CFR_frequencys/CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_DE_0.3_0.3_0.3.csv', error_bad_lines=False, sep=';', encoding = 'latin1', index_col= False, low_memory=False)
+df_DE_05 = pd.read_csv('CFR_frequencys/CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_DE_0.5_0.5_0.5AC.csv', error_bad_lines=False, sep=';', encoding = 'latin1', index_col= False, low_memory=False)
+HistPlotterOneVar(df_DE_05.iloc[24:], 'DE', 'Dunkelflaute Events', '0.5')
+
 df_DE_07 = pd.read_csv('CFR_frequencys/CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_DE_0.7_0.7_0.7.csv', error_bad_lines=False, sep=';', encoding = 'latin1', index_col= False, low_memory=False)
 
 HistPlotterDF3Thresholds(df_DE_03, df_DE_05, df_DE_07, 'DE', '0.3, 0.5, 0.7')

@@ -400,7 +400,7 @@ def FrequencyCalculatorCFRBelowThreshold(installed_capacity_factor_solar_pv_powe
 
         DF_frequencies['Total_Count'][DF_frequencies['LengthsDF'] == l] = counter_df
 
-        DF_frequencies.to_csv('CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_' + str(country) + '_' + str(threshold_list[0]) + '_' + str(threshold_list[1]) + '_' + str(threshold_list[2]) + '.csv', sep=';', encoding='latin1', index=False)
+        DF_frequencies.to_csv('CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_' + str(country) + '_' + str(threshold_list[0]) + '_' + str(threshold_list[1]) + '_' + str(threshold_list[2]) + 'AC.csv', sep=';', encoding='latin1', index=False)
 
     return DF_frequencies
 
@@ -539,7 +539,7 @@ def FrequencyCalculatorCFRBelowThresholdOneEnergyVariableOneThresholds(installed
 
         DF_frequencies[str(threshold)][DF_frequencies['LengthsDF'] == l] = counter_df
 
-        DF_frequencies.to_csv('CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_' + str(country) + var_type + str(threshold) +'_threshold.csv', sep=';', encoding='latin1', index=False)
+        DF_frequencies.to_csv('CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_' + str(country) + var_type + str(threshold) +'_corrected_data_threshold.csv', sep=';', encoding='latin1', index=False)
 
     return DF_frequencies
 

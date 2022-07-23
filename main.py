@@ -218,23 +218,25 @@ if config.Preprocessor:
         #solar_pv_power_CFR_moving_avg_h = Preprocessor.MovingAveragesCalculatorSolarPVHourly(solar_pv_power_CFR)
 
         # This is current function
-        solar_pv_power_CFR_moving_avg_h2 = Preprocessor.MovingAveragesCalculatorSolarPVHourly2(solar_pv_power_CFR)
+        #solar_pv_power_CFR_moving_avg_h2 = Preprocessor.MovingAveragesCalculatorSolarPVHourly2(solar_pv_power_CFR)
 
-        solar_pv_power_CFR_moving_avg_h2.to_csv(
-             'solar_pv_power_CFR_moving_avg_h2.csv', sep=';', encoding='latin1', index=False)
+        #solar_pv_power_CFR_moving_avg_h2.to_csv(
+        #     'solar_pv_power_CFR_moving_avg_h2.csv', sep=';', encoding='latin1', index=False)
 
-        wind_power_ons_moving_avg = Preprocessor.MovingAveragesCalculator(new_CFRs_onshore_wind)
-        wind_power_ons_moving_avg.to_csv('wind_power_ons_moving_avg.csv', sep=';', encoding='latin1', index=False)
+        #wind_power_ons_moving_avg = Preprocessor.MovingAveragesCalculator(new_CFRs_onshore_wind)
+        #wind_power_ons_moving_avg.to_csv('wind_power_ons_moving_avg.csv', sep=';', encoding='latin1', index=False)
+
         # wind_power_ons_moving_avg.to_csv(
         #     config.file_path_ext_ssd + 'wind_power_ons_moving_avg.csv', sep=';', encoding='latin1', index=False)
 
         wind_power_offs_moving_avg = Preprocessor.MovingAveragesCalculator(new_CFRs_offshore_wind)
         wind_power_offs_moving_avg.to_csv('wind_power_offs_moving_avg.csv', sep=';', encoding='latin1', index=False)
+        print(1)
 #        wind_power_offs_moving_avg.to_csv(
 #            config.file_path_ext_ssd + 'wind_power_offs_moving_avg.csv', sep=';', encoding='latin1', index=False)
 
         # solar_pv_wind_power_moving_avg.to_csv(config.file_path + 'solar_pv_wind_power_moving_avg.csv')
-        print(1)
+
     if config.Preprocessor_read_data_mov_avg:
         solar_pv_power_CFR_moving_avg = pd.read_csv('solar_pv_power_CFR_moving_avg_h2.csv', error_bad_lines=False,
                                                     sep=';', encoding='latin1', index_col=False)
@@ -242,6 +244,11 @@ if config.Preprocessor:
         wind_power_ons_moving_avg = pd.read_csv('wind_power_ons_moving_avg.csv', error_bad_lines=False, sep=';', encoding = 'latin1', index_col= False)
 
         wind_power_offs_moving_avg = pd.read_csv('wind_power_offs_moving_avg.csv', error_bad_lines=False, sep=';', encoding = 'latin1', index_col= False)
+
+        wind_power_ons_CFR = pd.read_csv('new_CFRs_onshore_wind.csv', error_bad_lines=False, sep=';', encoding = 'latin1', index_col= False)
+
+        wind_power_offs_CFR = pd.read_csv('new_CFRs_offshore_wind.csv', error_bad_lines=False, sep=';', encoding = 'latin1', index_col= False)
+
 
         solar_pv_power_CFR_moving_avg['Date'] = solar_pv_power_CFR_moving_avg['Date'].apply(
             lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
@@ -321,6 +328,16 @@ if config.Preprocessor:
     installed_capacity_factor_solar_pv_power = installed_capacity_factor_solar_pv_power.round(3)
     installed_capacity_factor_wind_power_ons = installed_capacity_factor_wind_power_ons.round(3)
     installed_capacity_factor_wind_power_offs = installed_capacity_factor_wind_power_offs.round(3)
+
+
+    dunkelflaute_freq_country_i_th05ons = Preprocessor.FrequencyCalculatorCFRBelowThresholdOneEnergyVariableOneThresholds(
+        installed_capacity_factor_wind_power_ons, 'DE', 0.5, 'wind_power_onshore')
+    dunkelflaute_freq_country_i_th05offs = Preprocessor.FrequencyCalculatorCFRBelowThresholdOneEnergyVariableOneThresholds(
+        installed_capacity_factor_wind_power_offs, 'DE', 0.5, 'wind_power_offshore')
+
+    dunkelflaute_freq_country_i = Preprocessor.FrequencyCalculatorCFRBelowThreshold(installed_capacity_factor_solar_pv_power, installed_capacity_factor_wind_power_ons, installed_capacity_factor_wind_power_offs, 'DE', [0.2, 0.2, 0.2])
+    dunkelflaute_freq_country_i = Preprocessor.FrequencyCalculatorCFRBelowThreshold(installed_capacity_factor_solar_pv_power, installed_capacity_factor_wind_power_ons, installed_capacity_factor_wind_power_offs, 'DE', [0.5, 0.5, 0.5])
+    print(1)
 
     dunkelflaute_freq_country_i = Preprocessor.FrequencyCalculatorCFRBelowThreshold(installed_capacity_factor_solar_pv_power, installed_capacity_factor_wind_power_ons, installed_capacity_factor_wind_power_offs, 'NL', [0.7, 0.7, 0.7])
     #dunkelflaute_freq_country_i = Preprocessor.FrequencyCalculatorCFRBelowThreshold(installed_capacity_factor_solar_pv_power, installed_capacity_factor_wind_power_ons, installed_capacity_factor_wind_power_offs, 'DE', [0.6, 0.6, 0.6])

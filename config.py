@@ -14,7 +14,7 @@ ETL_meteo_vars = False
 ETL_meteo_vars_API = False
 ETL_meteo_vars_Write = False
 ETL_meteo_vars_Reader = False
-ETL_RegressionCorrection = True
+ETL_RegressionCorrection = False
 
 # If true, the Preprocessor is executed
 Preprocessor = True
@@ -55,7 +55,7 @@ Min_length_DF = 24 # in hours
 length_mov_avg_calc_in_days = 30
 
 #range_lengths_DF_hist = range(1, 72)
-range_lengths_DF_hist = range(1, 72)
+range_lengths_DF_hist = range(23, 72)
 """
 Optional parameters
 """
