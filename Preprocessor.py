@@ -79,7 +79,7 @@ def MovingAveragesCalculator(CFR_data):
     CFR_rolling_window_mean_new[data_fill_up.columns[1:]] = data_fill_up[data_fill_up.columns[1:]].values
 
     CFR_rolling_window_mean = CFR_rolling_window_mean_new.append(CFR_rolling_window_mean_old)
-
+    print(1)
     return CFR_rolling_window_mean
 
 def MovingAveragesCalculatorSolarPVHourly2(CFR_data):
@@ -506,6 +506,57 @@ def FrequencyCalculatorCFRBelowThresholdOneEnergyVariableSeveralThresholds(insta
 #
 # answer = pool_obj.map(sumall,range(0,5))
 # print(answer)
+
+def FrequencyCalculatorCFRBelowThresholdPVOnshoreWind(installed_capacity_factor_solar_pv_power, installed_capacity_factor_wind_power_ons, country, threshold_list):
+
+    # cols_no_offs_wind = installed_capacity_factor_wind_power_ons.columns.difference(installed_capacity_factor_wind_power_offs.columns)
+    # installed_capacity_factor_wind_power_offs[cols_no_offs_wind] = 0
+    #
+    # cols_only_offs_wind = installed_capacity_factor_wind_power_offs.columns.difference(installed_capacity_factor_wind_power_ons.columns)
+    # installed_capacity_factor_wind_power_ons[cols_only_offs_wind] = 0
+    # installed_capacity_factor_solar_pv_power[cols_only_offs_wind] = 0
+
+    installed_capacity_factor_solar_pv_power_country = installed_capacity_factor_solar_pv_power[['Date', str(country)]]
+    installed_capacity_factor_solar_pv_power_country = installed_capacity_factor_solar_pv_power_country.rename(columns={str(country): str(country) + "_solar"})
+
+    installed_capacity_factor_wind_power_ons_country = installed_capacity_factor_wind_power_ons[['Date', str(country)]]
+    installed_capacity_factor_wind_power_ons_country = installed_capacity_factor_wind_power_ons_country.rename(columns={str(country): str(country) + "_wind_ons"})
+
+    installed_capacity_factor_all = installed_capacity_factor_solar_pv_power_country.merge(installed_capacity_factor_wind_power_ons_country, on = 'Date', how = 'left')
+
+    installed_capacity_factor_solar_pv_power_country_df_candidates = installed_capacity_factor_all[
+        (installed_capacity_factor_all[str(country) + "_solar"] <= threshold_list[0]) &
+        (installed_capacity_factor_all[str(country) + "_wind_ons"] <= threshold_list[1])]
+
+    DF_frequencies = pd.DataFrame(list(config.range_lengths_DF_hist), columns=['LengthsDF'])
+    DF_frequencies['Total_Count'] = np.nan
+    for l in config.range_lengths_DF_hist:
+        counter_df = 0
+        ind = 0
+        for dates in installed_capacity_factor_solar_pv_power_country_df_candidates['Date']:
+            range_period_df = pd.date_range(start=dates, end=dates + timedelta(hours=l - 1), freq='H')
+            hour_after_range_period_df = dates + timedelta(hours=l)
+            hour_before_range_period_df = dates - timedelta(hours=1)
+
+            if (pd.DataFrame(range_period_df)[0].isin(installed_capacity_factor_solar_pv_power_country_df_candidates['Date']).all() &
+                ~(installed_capacity_factor_solar_pv_power_country_df_candidates['Date'].isin(
+                    [hour_after_range_period_df]).any()) & ~(installed_capacity_factor_solar_pv_power_country_df_candidates['Date'].isin(
+                    [hour_before_range_period_df]).any())):
+                counter_df = counter_df + 1
+
+                if ind == 0:
+                    dunkelflaute_dates_country = range_period_df.values
+                    ind = 1
+                else:
+                    dunkelflaute_dates_country = np.append(dunkelflaute_dates_country, range_period_df)
+
+
+        DF_frequencies['Total_Count'][DF_frequencies['LengthsDF'] == l] = counter_df
+
+        DF_frequencies.to_csv('CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_' + str(country) + '_' + str(threshold_list[0]) + '_' + str(threshold_list[1]) + '_' + '_PVOnshoreWind_AC.csv', sep=';', encoding='latin1', index=False)
+
+    return DF_frequencies
+
 
 def FrequencyCalculatorCFRBelowThresholdOneEnergyVariableOneThresholds(installed_capacity_factor, country, threshold, var_type):
 
