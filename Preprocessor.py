@@ -530,9 +530,9 @@ def FrequencyCalculatorCFRBelowThresholdPVOnshoreWind(installed_capacity_factor_
 
     DF_frequencies = pd.DataFrame(list(config.range_lengths_DF_hist), columns=['LengthsDF'])
     DF_frequencies['Total_Count'] = np.nan
+    ind = 0
     for l in config.range_lengths_DF_hist:
         counter_df = 0
-        ind = 0
         for dates in installed_capacity_factor_solar_pv_power_country_df_candidates['Date']:
             range_period_df = pd.date_range(start=dates, end=dates + timedelta(hours=l - 1), freq='H')
             hour_after_range_period_df = dates + timedelta(hours=l)
@@ -554,6 +554,8 @@ def FrequencyCalculatorCFRBelowThresholdPVOnshoreWind(installed_capacity_factor_
         DF_frequencies['Total_Count'][DF_frequencies['LengthsDF'] == l] = counter_df
 
         DF_frequencies.to_csv('CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_' + str(country) + '_' + str(threshold_list[0]) + '_' + str(threshold_list[1]) + '_' + '_PVOnshoreWind_AC.csv', sep=';', encoding='latin1', index=False)
+        if counter_df != 0:
+            pd.DataFrame(dunkelflaute_dates_country).to_csv('CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_' + str(country) + str(threshold_list[1]) +'_PVOnshoreWind_AC_dates.csv', sep=';', encoding='latin1', index=False)
 
     return DF_frequencies
 

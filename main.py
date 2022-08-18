@@ -282,9 +282,45 @@ if config.ETL:
             # new_CFRs_offshore_wind.to_csv(
             #     'new_CFRs_offshore_windES.csv', sep=';', encoding='latin1', index=False)
 
+        if config.ETL_RegressionCorrection_FR:
+            # PL
+            wind_act_gen20FR = pd.read_csv('ENTSOEActGenWind/Actual Generation per Production Type_202001010000-202101010000FR.csv',
+                                                        sep=',')
+            wind_act_gen21FR = pd.read_csv('ENTSOEActGenWind/Actual Generation per Production Type_202101010000-202201010000FR.csv',
+                                                        sep=',')
+            wind_act_genFR = wind_act_gen20FR.append(wind_act_gen21FR)
+            wind_act_genFR = wind_act_genFR[
+                ['MTU', 'Wind Offshore  - Actual Aggregated [MW]', 'Wind Onshore  - Actual Aggregated [MW]']]
+
+            wind_act_genFR['Time'] = pd.to_datetime(wind_act_genFR['MTU'].str[0:10] + ' ' + wind_act_genFR['MTU'].str[11:16] , format = '%d.%m.%Y %H:%M')
+            wind_act_genFR = wind_act_genFR.drop(columns = 'MTU')
+            wind_act_genFR['Time'] = pd.Series(wind_act_genFR['Time'].apply(lambda x: x.floor('H')))
+            wind_act_genFR_aggr = wind_act_genFR.groupby(by=['Time']).mean().reset_index()
+            wind_act_genFR_aggr_max_ons = wind_act_genFR_aggr['Wind Onshore  - Actual Aggregated [MW]'].max()
+            wind_act_genFR_aggr['Wind Onshore  - Actual Aggregated [MW]'] = wind_act_genFR_aggr['Wind Onshore  - Actual Aggregated [MW]']/wind_act_genFR_aggr_max_ons
+
+            #todo: check if we can aggregate with mean or sum
+            y_wind_ons = wind_act_genFR_aggr['Wind Onshore  - Actual Aggregated [MW]']
+            X_wind_ons = wind_ons_CFR_nuts02_20_21[wind_ons_CFR_nuts02_20_21.columns[145:167]]
+            X_wind_ons = X_wind_ons.dropna(axis = 1, how = 'all')
+
+            X_wind_ons_all = wind_ons_CFR_nuts02[wind_ons_CFR_nuts02.columns[145:167]]
+            X_wind_ons_all = X_wind_ons_all.dropna(axis=1, how='all')
+
+            regr_wind_ons = LinearRegression(fit_intercept=False, positive=True).fit(X_wind_ons, y_wind_ons.fillna(method='ffill'))
+            weights_regr_wind_ons = regr_wind_ons.coef_
+
+            new_CFRs_onshore_windFR = pd.DataFrame(np.dot(X_wind_ons_all, weights_regr_wind_ons), columns = ['FR'])
+            new_CFRs_onshore_windFR.insert(0, 'Date', wind_ons_CFR_nuts02['Date'].reset_index().drop(columns = 'index'))
+            new_CFRs_onshore_windFR.to_csv(
+                'new_CFRs_onshore_windFR.csv', sep=';', encoding='latin1', index=False)
+
+
         new_CFRs_onshore_windNLPLES = new_CFRs_onshore_windNL.merge(new_CFRs_onshore_windPL, on = 'Date', how = 'left')
         new_CFRs_onshore_windNLPLES = new_CFRs_onshore_windNLPLES.merge(new_CFRs_onshore_windES, on = 'Date', how = 'left')
-
+        new_CFRs_onshore_windNLPLESFR = new_CFRs_onshore_windNLPLES.merge(new_CFRs_onshore_windFR, on='Date', how='left')
+        new_CFRs_onshore_windNLPLESFR.to_csv(
+            'new_CFRs_onshore_windNLPLESFR.csv', sep=';', encoding='latin1', index=False)
 
 
 #todo: check if sum of capacity of variables < threshold is correct or each of them needs to be
@@ -347,6 +383,9 @@ if config.Preprocessor:
         #wind_power_ons_moving_avg = Preprocessor.MovingAveragesCalculator(new_CFRs_onshore_wind)
         #wind_power_ons_moving_avg.to_csv('wind_power_ons_moving_avg.csv', sep=';', encoding='latin1', index=False)
 
+        wind_power_ons_moving_avgFR = Preprocessor.MovingAveragesCalculator(new_CFRs_onshore_windFR)
+        wind_power_ons_moving_avgFR.to_csv('wind_power_ons_moving_avgFR.csv', sep=';', encoding='latin1', index=False)
+
         wind_power_ons_moving_avgNLPLES = Preprocessor.MovingAveragesCalculator(new_CFRs_onshore_windNLPLES)
         wind_power_ons_moving_avgNLPLES.to_csv('wind_power_ons_moving_avgNLPLES.csv', sep=';', encoding='latin1', index=False)
 
@@ -367,10 +406,14 @@ if config.Preprocessor:
                                                     sep=';', encoding='latin1', index_col=False)
 
         wind_power_ons_moving_avg = pd.read_csv('wind_power_ons_moving_avg.csv', error_bad_lines=False, sep=';', encoding = 'latin1', index_col= False)
+        wind_power_ons_moving_avgNLPLES = pd.read_csv('wind_power_ons_moving_avgNLPLES.csv', error_bad_lines=False, sep=';', encoding = 'latin1', index_col= False)
+        wind_power_ons_moving_avgFR = pd.read_csv('wind_power_ons_moving_avgFR.csv', error_bad_lines=False, sep=';',
+                                                encoding='latin1', index_col=False)
 
         wind_power_offs_moving_avg = pd.read_csv('wind_power_offs_moving_avg.csv', error_bad_lines=False, sep=';', encoding = 'latin1', index_col= False)
 
         wind_power_ons_CFR = pd.read_csv('new_CFRs_onshore_wind.csv', error_bad_lines=False, sep=';', encoding = 'latin1', index_col= False)
+        wind_power_ons_CFRNLPLESFR = pd.read_csv('new_CFRs_onshore_windNLPLESFR.csv', error_bad_lines=False, sep=';', encoding = 'latin1', index_col= False)
 
         wind_power_offs_CFR = pd.read_csv('new_CFRs_offshore_wind.csv', error_bad_lines=False, sep=';', encoding = 'latin1', index_col= False)
 
@@ -379,8 +422,16 @@ if config.Preprocessor:
             lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
         wind_power_ons_moving_avg['Date'] = wind_power_ons_moving_avg['Date'].apply(
             lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
+        wind_power_ons_moving_avgNLPLES['Date'] = wind_power_ons_moving_avgNLPLES['Date'].apply(
+            lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
+        wind_power_ons_moving_avgFR['Date'] = wind_power_ons_moving_avgFR['Date'].apply(
+            lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
         wind_power_offs_moving_avg['Date'] = wind_power_offs_moving_avg['Date'].apply(
             lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
+
+        wind_power_ons_moving_avg = wind_power_ons_moving_avg.merge(wind_power_ons_moving_avgNLPLES, on = 'Date', how = 'left')
+        wind_power_ons_moving_avg = wind_power_ons_moving_avg.merge(wind_power_ons_moving_avgFR, on = 'Date', how = 'left')
+        wind_power_ons_CFR = wind_power_ons_CFR.merge(wind_power_ons_CFRNLPLESFR, on = 'Date', how = 'left')
 
     if config.Preprocessor_installed_capacity_corrector:
         # for 29th of February fill in the mean of the 28th of February and 01st of March
@@ -454,12 +505,22 @@ if config.Preprocessor:
     installed_capacity_factor_wind_power_ons = installed_capacity_factor_wind_power_ons.round(3)
     installed_capacity_factor_wind_power_offs = installed_capacity_factor_wind_power_offs.round(3)
 
+
+    dunkelflaute_freq_country_i = Preprocessor.FrequencyCalculatorCFRBelowThresholdPVOnshoreWind(installed_capacity_factor_solar_pv_power, installed_capacity_factor_wind_power_ons, 'ES', [0.5, 0.5])
+
+    dunkelflaute_freq_country_i = Preprocessor.FrequencyCalculatorCFRBelowThresholdPVOnshoreWind(installed_capacity_factor_solar_pv_power, installed_capacity_factor_wind_power_ons, 'FR', [0.5, 0.5])
+
     dunkelflaute_freq_country_i = Preprocessor.FrequencyCalculatorCFRBelowThresholdPVOnshoreWind(installed_capacity_factor_solar_pv_power, installed_capacity_factor_wind_power_ons, 'DE', [0.5, 0.5])
 
-    dunkelflaute_freq_country_i_th05ons = Preprocessor.FrequencyCalculatorCFRBelowThresholdOneEnergyVariableOneThresholds(
-        installed_capacity_factor_wind_power_ons, 'DE', 0.5, 'wind_power_onshore')
-    dunkelflaute_freq_country_i_th05offs = Preprocessor.FrequencyCalculatorCFRBelowThresholdOneEnergyVariableOneThresholds(
-        installed_capacity_factor_wind_power_offs, 'DE', 0.5, 'wind_power_offshore')
+    dunkelflaute_freq_country_i = Preprocessor.FrequencyCalculatorCFRBelowThresholdPVOnshoreWind(installed_capacity_factor_solar_pv_power, installed_capacity_factor_wind_power_ons, 'NL', [0.5, 0.5])
+    dunkelflaute_freq_country_i = Preprocessor.FrequencyCalculatorCFRBelowThresholdPVOnshoreWind(installed_capacity_factor_solar_pv_power, installed_capacity_factor_wind_power_ons, 'PL', [0.5, 0.5])
+    dunkelflaute_freq_country_i = Preprocessor.FrequencyCalculatorCFRBelowThresholdPVOnshoreWind(installed_capacity_factor_solar_pv_power, installed_capacity_factor_wind_power_ons, 'ES', [0.5, 0.5])
+
+    #
+    # dunkelflaute_freq_country_i_th05ons = Preprocessor.FrequencyCalculatorCFRBelowThresholdOneEnergyVariableOneThresholds(
+    #     installed_capacity_factor_wind_power_ons, 'DE', 0.5, 'wind_power_onshore')
+    # dunkelflaute_freq_country_i_th05offs = Preprocessor.FrequencyCalculatorCFRBelowThresholdOneEnergyVariableOneThresholds(
+    #     installed_capacity_factor_wind_power_offs, 'DE', 0.5, 'wind_power_offshore')
 
     dunkelflaute_freq_country_i = Preprocessor.FrequencyCalculatorCFRBelowThreshold(installed_capacity_factor_solar_pv_power, installed_capacity_factor_wind_power_ons, installed_capacity_factor_wind_power_offs, 'DE', [0.2, 0.2, 0.2])
     dunkelflaute_freq_country_i = Preprocessor.FrequencyCalculatorCFRBelowThreshold(installed_capacity_factor_solar_pv_power, installed_capacity_factor_wind_power_ons, installed_capacity_factor_wind_power_offs, 'DE', [0.5, 0.5, 0.5])
@@ -582,8 +643,13 @@ if config.Describer:
         longitude = ds['longitude'][:]
         latitude = ds['latitude'][:]
 
-        DFDescriber.MeteoVarsPlotter(dunkelflaute_dates_country_i, data_msl_1979, dates_msl_1979, 'msl', longitude, latitude)
+        dunkelflaute_dates_DE = pd.read_csv('CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_DE0.5_PVOnshoreWind_AC_dates.csv',
+                                                               error_bad_lines=False, sep=';', encoding='latin1',
+                                                               index_col=False, low_memory=False)
 
+        DFDescriber.MeteoVarsPlotter(dunkelflaute_dates_DE, data_msl_1979, dates_msl_1979, 'msl', longitude, latitude)
+
+        print(1)
 
 # sum of capacities below ...% (?)
 

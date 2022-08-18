@@ -99,6 +99,19 @@ def DFHoursPerYear(df_HoursPerYearCountryi1, df_HoursPerYearCountryi2, df_HoursP
     df_HoursPerYear = df_HoursPerYear.merge(df_HoursPerYearCountryi3, on = 'Thresholds')
     return df_HoursPerYear
 
+df_DE_05 = pd.read_csv('CFR_frequencys/CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_DE_0.5_0.5__PVOnshoreWind_AC.csv', error_bad_lines=False, sep=';', encoding = 'latin1', index_col= False, low_memory=False)
+HistPlotterOneVar(df_DE_05, 'DE', 'Dunkelflaute Events', '0.5')
+
+df_NL_05 = pd.read_csv('CFR_frequencys/CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_NL_0.5_0.5__PVOnshoreWind_AC.csv', error_bad_lines=False, sep=';', encoding = 'latin1', index_col= False, low_memory=False)
+HistPlotterOneVar(df_NL_05, 'NL', 'Dunkelflaute Events', '0.5')
+
+df_PL_05 = pd.read_csv('CFR_frequencys/CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_PL_0.5_0.5__PVOnshoreWind_AC.csv', error_bad_lines=False, sep=';', encoding = 'latin1', index_col= False, low_memory=False)
+HistPlotterOneVar(df_PL_05, 'PL', 'Dunkelflaute Events', '0.5')
+
+df_FR_05 = pd.read_csv('CFR_frequencys/CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_FR_0.5_0.5__PVOnshoreWind_AC.csv', error_bad_lines=False, sep=';', encoding = 'latin1', index_col= False, low_memory=False)
+HistPlotterOneVar(df_FR_05, 'FR', 'Dunkelflaute Events', '0.5')
+
+
 dunkelflaute_freq_country_i_windows05 = pd.read_csv('CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_DEwind_power_onshore0.5_corrected_data_threshold.csv', error_bad_lines=False, sep=';', encoding = 'latin1', index_col= False, low_memory=False)
 HistPlotterOneVar(dunkelflaute_freq_country_i_windows05, 'DE', 'Onshore Wind', '0.5')
 

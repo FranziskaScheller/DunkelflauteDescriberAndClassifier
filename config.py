@@ -14,15 +14,16 @@ ETL_meteo_vars = False
 ETL_meteo_vars_API = False
 ETL_meteo_vars_Write = False
 ETL_meteo_vars_Reader = False
-ETL_RegressionCorrection = True
-ETL_RegressionCorrection_DE = False
+ETL_RegressionCorrection = False
+ETL_RegressionCorrection_DE = True
 ETL_RegressionCorrection_NL = True
 ETL_RegressionCorrection_PL = True
 ETL_RegressionCorrection_ES = True
+ETL_RegressionCorrection_FR = True
 
 # If true, the Preprocessor is executed
-Preprocessor = True
-Preprocessor_calc_mov_avg = True
+Preprocessor = False
+Preprocessor_calc_mov_avg = False
 Preprocessor_read_data_mov_avg = True
 Preprocessor_installed_capacity_corrector = True
 calc_summary_measures = False
@@ -30,7 +31,7 @@ calc_summary_measures = False
 Describer = True
 # If true, the individual components of the Dunkelflaute Describer is executed
 
-DescriberMSLDataCalculator = True
+DescriberMSLDataCalculator = False
 DescriberMSLPlotter = True
 DescriberTAPlotter = True
 DescriberWS10Plotter = True
@@ -59,7 +60,7 @@ Min_length_DF = 24 # in hours
 length_mov_avg_calc_in_days = 30
 
 #range_lengths_DF_hist = range(1, 72)
-range_lengths_DF_hist = range(23, 72)
+range_lengths_DF_hist = range(24, 120)
 """
 Optional parameters
 """
