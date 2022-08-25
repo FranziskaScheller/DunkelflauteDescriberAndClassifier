@@ -6,7 +6,7 @@
 Select the modules that you want to execute in this run 
 """
 # If true, the ETL is executed
-ETL = True
+ETL = False
 # If true, the individual components of the ETL is executed
 ETL_energy_vars_API = False
 ETL_energy_vars_Load = True
@@ -24,14 +24,14 @@ ETL_RegressionCorrection_FR = True
 # If true, the Preprocessor is executed
 Preprocessor = False
 Preprocessor_calc_mov_avg = False
-Preprocessor_read_data_mov_avg = True
-Preprocessor_installed_capacity_corrector = True
+Preprocessor_read_data_mov_avg = False
+Preprocessor_installed_capacity_corrector = False
 calc_summary_measures = False
 # If true, the Dunkelflaute Describer is executed
 Describer = True
 # If true, the individual components of the Dunkelflaute Describer is executed
 
-DescriberMSLDataCalculator = False
+DescriberMSLDataCalculator = True
 DescriberMSLPlotter = True
 DescriberTAPlotter = True
 DescriberWS10Plotter = True
@@ -55,7 +55,7 @@ file_path = '/Users/franziska/PycharmProjects/DunkelflauteDescriberAndClassifier
 """
 Dunkelflaute specific arguments 
 """
-Capacity_Threshold_DF = 0.2
+Capacity_Threshold_DF = 0.5
 Min_length_DF = 24 # in hours
 length_mov_avg_calc_in_days = 30
 

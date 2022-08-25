@@ -306,23 +306,28 @@ def MeterologyVarsReader(years, var):
     for year in years:
 
         ind = 0
-        if year in ['2019', '2020', '2021', '2021', '2022']:
+        if ((year in [2019, 2020, 2021, 2021, 2022]) or (var[0] == 'GHI-_0000m')):
 
+            print(1)
             for month in [['01', '02', '0131', '0228'], ['03', '04', '0331', '0430'], ['05', '06', '0531', '0630'],
                               ['07', '08', '0731', '0831'],
                               ['09', '10', '0930', '1031'], ['11', '12', '1130', '1231']]:
 
                 month_start = month[0]
                 month_end = month[1]
-                fn = config.file_path_ext_ssd + 'download' + year + month_start + month_end + '/H_ERA5_ECMW_T639_' + var[0] + '_0000m_Euro_025d_S' + year + month_start + '010000_E' + year + \
+                fn = config.file_path_ext_ssd + 'download' + str(year) + month_start + month_end + '/H_ERA5_ECMW_T639_' + var[0] + '_Euro_025d_S' + str(year) + month_start + '010000_E' + str(year) + \
                         month[2] + '2300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
                 ds = nc.Dataset(fn)
-                fn2 = config.file_path_ext_ssd + 'download' + year + month_start + month_end + '/H_ERA5_ECMW_T639_' + var[0] + '_0000m_Euro_025d_S' + year + month_end + '010000_E' + year + \
-                        month[3] + '2300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
+                if (((year == 2020) or (year == 1980) or (year == 1984) or (year == 1988) or (year == 1992) or (year == 1996) or (year == 2000) or (year == 2004) or (year == 2008) or (year == 2012) or (year == 2016)) & (month_end == '02')) :
+                    fn2 = config.file_path_ext_ssd + 'download' + str(year) + month_start + month_end + '/H_ERA5_ECMW_T639_' + var[0] + '_Euro_025d_S' + str(year) + month_end + '010000_E' + str(year) + \
+                            '0229' + '2300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
+                else:
+                    fn2 = config.file_path_ext_ssd + 'download' + str(year) + month_start + month_end + '/H_ERA5_ECMW_T639_' + var[0] + '_Euro_025d_S' + str(year) + month_end + '010000_E' + str(year) + \
+                            month[3] + '2300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
                 ds2 = nc.Dataset(fn2)
 
-                ssrd = ds['ssrd'][:].data
-                ssrd2 = ds2['ssrd'][:].data
+                ssrd = ds[var[1]][:].data
+                ssrd2 = ds2[var[1]][:].data
 
                 ssrd_conc = np.concatenate((ssrd, ssrd2))
                 time_conc = np.concatenate((ds['time'][:].data, ds2['time'][:].data))
@@ -344,6 +349,8 @@ def MeterologyVarsReader(years, var):
             for d in range(1, len(time_comp)):
                 dates = dates.append(pd.Series(ref_date + timedelta(hours=int(time_comp[d]))))
 
+            dates_all = dates
+            data_var_all = ssrd_comp
         else:
 
             fn = config.file_path_ext_ssd + 'download' + str(year) + '0102/H_ERA5_ECMW_T639_' + str(var[0]) + '_Euro_025d_S' + str(year) + '01010000_E' + str(year) + '12312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
@@ -359,14 +366,13 @@ def MeterologyVarsReader(years, var):
             for d in range(1, len(ds['time'][:].data)):
                 dates = dates.append(pd.Series(ref_date + timedelta(hours=int(ds['time'][:].data[d]))))
 
-        if ind2 == 0:
-            data_var_all = data_var
-            dates_all = dates
-            ind2 = 1
-        else:
-            data_var_all = np.concatenate((data_var_all, data_var))
-            dates_all = np.concatenate((dates_all, dates))
-
+            if ind2 == 0:
+                data_var_all = data_var
+                dates_all = dates
+                ind2 = 1
+            else:
+                data_var_all = np.concatenate((data_var_all, data_var))
+                dates_all = np.concatenate((dates_all, dates))
 
     return data_var_all, dates_all
 
