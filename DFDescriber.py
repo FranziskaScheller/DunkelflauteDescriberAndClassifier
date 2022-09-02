@@ -26,8 +26,17 @@ def MeteoVarsAggregatorForDunkelflauteEvents(dunkelflaute_dates_country_i, meteo
     years = np.sort(DFDates_df['Date'].apply(lambda x: x.year).unique())
     #years = [1979, 1980, 1981, 1982]
     ind = 0
-    for year in [2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021]:
-    #for year in [1990]:
+    #for year in [2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021]:
+    #for year in [2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021]:
+    #for year in [1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021]:
+    #for year in [2000, 2001, 2002, 2003, 2004,
+    #              2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021]:
+
+    #for year in [2018, 2019, 2020, 2021]:
+    for year in years:
+    #for year in [2021]:
+    #for year in [1979, 1980, 1981, 1982, 1983, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999]:
+
 
         data_msl, dates_msl = ETL.MeterologyVarsReader([year], meteo_var)
         dates_msl_df = pd.DataFrame(dates_msl, columns=['Date']).reset_index().drop(columns='index')
@@ -55,20 +64,22 @@ def MeteoVarsAggregatorForDunkelflauteEvents(dunkelflaute_dates_country_i, meteo
 
             print(str(year))
 
-        pd.DataFrame(data_reshaped).to_csv(
-            config.file_path_ext_ssd + 'DF_Data_all_' + meteo_var[1] + str(country) + '0121.csv', sep=';', encoding='latin1', index=False, header=False,
-            quoting=csv.QUOTE_NONE)
-        pd.DataFrame(DF_Dates_all).to_csv(
-            config.file_path_ext_ssd + 'DF_Dates_all_' + meteo_var[1] + str(country) + '0121.csv', sep=';', encoding='latin1', index=False, header=False,
-            quoting=csv.QUOTE_NONE)
-
-
     DF_Data_all_mean = DF_Data_all.mean(axis= 0)
 
     pd.DataFrame(DF_Data_all_mean).to_csv(
         config.file_path_ext_ssd + 'DF_Data_all_mean_' + meteo_var[1] + str(country) + '.csv', sep=';', encoding='latin1', index=False,
         header=False,
         quoting=csv.QUOTE_NONE)
+
+    # pd.DataFrame(data_reshaped).to_csv(
+    #         config.file_path_ext_ssd + 'DF_Data_all_' + meteo_var[1] + str(country) + '.csv', sep=';', encoding='latin1', index=False, header=False,
+    #         quoting=csv.QUOTE_NONE)
+    pd.DataFrame(DF_Dates_all).to_csv(
+            config.file_path_ext_ssd + 'DF_Dates_all_' + meteo_var[1] + str(country) + '.csv', sep=';', encoding='latin1', index=False, header=False,
+            quoting=csv.QUOTE_NONE)
+
+
+
     print(1)
 
     return DF_Data_all_mean
@@ -102,7 +113,7 @@ def MeteoVarsPlotter(DF_Data_all_mean,country_name, var_name, longitude, latitud
     ax.set_xlabel('Longitude')
     plt.title(
         'Mean of ' + str(var_name) + ' in case of Dunkelflaute events for ' + country_name + ' with threshold ' + str(
-            config.Capacity_Threshold_DF))
+            config.Capacity_Threshold_DF), fontsize=9)
     plt.savefig(
         'Plot_mean_' + str(var_name) + '_' + str(country_name) + '.png')
     plt.show()

@@ -9,9 +9,9 @@ Select the modules that you want to execute in this run
 ETL = False
 # If true, the individual components of the ETL is executed
 ETL_energy_vars_API = False
-ETL_energy_vars_Load = True
+ETL_energy_vars_Load = False
 ETL_meteo_vars = False
-ETL_meteo_vars_API = False
+ETL_meteo_vars_API = True
 ETL_meteo_vars_Write = False
 ETL_meteo_vars_Reader = False
 ETL_RegressionCorrection = False

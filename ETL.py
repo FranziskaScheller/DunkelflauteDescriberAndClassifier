@@ -138,7 +138,7 @@ def MeterologyVarsLoaderAPIManually(year_start, year_end):
 
     for years in years_api:
         #name = config.file_path_ext_ssd + 'download' + years + '0506.zip'
-        name = 'download' + years + '0102.zip'
+        name = 'download' + years + '0304.zip'
         c.retrieve(
                     'sis-energy-derived-reanalysis',
                     {
@@ -150,7 +150,7 @@ def MeterologyVarsLoaderAPIManually(year_start, year_end):
                         'spatial_aggregation': 'original_grid',
                         'temporal_aggregation': 'hourly',
                         'year': years,
-                        'month': ['01', '02', ],
+                        'month': ['03', '04', ],
                     },
                     name)
 
@@ -306,7 +306,7 @@ def MeterologyVarsReader(years, var):
     for year in years:
 
         ind = 0
-        if ((year in [2019, 2020, 2021, 2021, 2022]) or (var[0] == 'GHI-_0000m')):
+        if ((year in [2019, 2020, 2021, 2021, 2022]) or (var[0] == 'GHI_0000m')):
 
             print(1)
             for month in [['01', '02', '0131', '0228'], ['03', '04', '0331', '0430'], ['05', '06', '0531', '0630'],
@@ -326,8 +326,12 @@ def MeterologyVarsReader(years, var):
                             month[3] + '2300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
                 ds2 = nc.Dataset(fn2)
 
-                ssrd = ds[var[1]][:].data
-                ssrd2 = ds2[var[1]][:].data
+                if ((year >= 2018) & (var[1] == 'ws10')):
+                    ssrd = ds['var_10_metre_wind_speed'][:].data
+                    ssrd2 = ds2['var_10_metre_wind_speed'][:].data
+                else:
+                    ssrd = ds[var[1]][:].data
+                    ssrd2 = ds2[var[1]][:].data
 
                 ssrd_conc = np.concatenate((ssrd, ssrd2))
                 time_conc = np.concatenate((ds['time'][:].data, ds2['time'][:].data))
@@ -355,8 +359,10 @@ def MeterologyVarsReader(years, var):
 
             fn = config.file_path_ext_ssd + 'download' + str(year) + '0102/H_ERA5_ECMW_T639_' + str(var[0]) + '_Euro_025d_S' + str(year) + '01010000_E' + str(year) + '12312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
             ds = nc.Dataset(fn)
-
-            data_var = ds[var[1]][:].data
+            if ((year >= 2019) & (var[1] == 'ws10')):
+                data_var = ds['var_10_metre_wind_speed'][:].data
+            else:
+                data_var = ds[var[1]][:].data
 
             unit = ds.variables['time'].units
             ref_date = datetime(int(unit[12:16]), int(unit[17:19]), int(unit[20:22]))
