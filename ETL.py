@@ -355,6 +355,7 @@ def MeterologyVarsReader(years, var):
 
             dates_all = dates
             data_var_all = ssrd_comp
+
         else:
 
             fn = config.file_path_ext_ssd + 'download' + str(year) + '0102/H_ERA5_ECMW_T639_' + str(var[0]) + '_Euro_025d_S' + str(year) + '01010000_E' + str(year) + '12312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
@@ -379,6 +380,13 @@ def MeterologyVarsReader(years, var):
             else:
                 data_var_all = np.concatenate((data_var_all, data_var))
                 dates_all = np.concatenate((dates_all, dates))
+
+    # if not ((var[0] == 'WS-_0010m') or (var[0] == 'WS-_0100m')):
+    #
+    #     add_offset = ds[var[1]].add_offset
+    #     scale_factor = ds[var[1]].scale_factor
+    #
+    #     data_var_all = data_var_all * scale_factor + add_offset
 
     return data_var_all, dates_all
 

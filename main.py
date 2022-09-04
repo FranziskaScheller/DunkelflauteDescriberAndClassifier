@@ -19,6 +19,7 @@ import csv
 import netCDF4 as nc
 from sklearn.linear_model import LinearRegression
 
+
 # import cdsapi
 #
 # c = cdsapi.Client()
@@ -624,6 +625,36 @@ if config.Preprocessor:
     print(1)
     #dunkelflaute_freq_all_countries  = Preprocessor.HistDunkelflauteDetectorFrequencysAllCountries(installed_capacity_solar_pv_power)
 
+
+if config.Preprocessor_comparison_dates:
+
+    dunkelflaute_dates_DE = pd.read_csv(
+            'CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_' + str('DE') + str(
+                '0.5') + '_PVOnshoreWind_AC_dates.csv')
+
+    solar_pv_power_CFR_moving_avg = pd.read_csv('solar_pv_power_CFR_moving_avg_h2.csv', error_bad_lines=False,
+                                                sep=';', encoding='latin1', index_col=False)
+
+    solar_pv_power_CFR_moving_avg['Date'] = solar_pv_power_CFR_moving_avg['Date'].apply(
+        lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
+
+    dunkelflaute_dates_DE['0'] = dunkelflaute_dates_DE['0'].apply(
+        lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
+
+    dates = solar_pv_power_CFR_moving_avg['Date']
+
+    reference_dates_DE = Preprocessor.ReferenceDateNoneDFFinder(dunkelflaute_dates_DE)
+    day_before_DF_dates_DE = Preprocessor.DayBeforeDFFinder(dunkelflaute_dates_DE)
+
+    reference_dates_DE.to_csv(
+        'reference_dates_DE.csv', sep=';', encoding='latin1', index=False)
+
+    day_before_DF_dates_DE.to_csv(
+        'day_before_DF_dates_DE.csv', sep=';', encoding='latin1', index=False)
+
+    print(1)
+
+
 """
 Plot mean of meteo variables for Dunkelflaute events
 """
@@ -712,15 +743,35 @@ if config.Describer:
 
         #DF_Data_all_mean = DFDescriber.MeteoVarsAggregatorForDunkelflauteEvents(dunkelflaute_dates_PL, ['MSL_0000m', 'msl'], 'PL')
         #DF_Data_all_mean = DFDescriber.MeteoVarsAggregatorForDunkelflauteEvents(dunkelflaute_dates_PL, ['TA-_0002m', 't2m'], 'PL')
-        DF_Data_all_mean = DFDescriber.MeteoVarsAggregatorForDunkelflauteEvents(dunkelflaute_dates_PL, ['WS-_0100m', 'var_100_metre_wind_speed'], 'PL')
+        #DF_Data_all_mean = DFDescriber.MeteoVarsAggregatorForDunkelflauteEvents(dunkelflaute_dates_PL, ['WS-_0100m', 'var_100_metre_wind_speed'], 'PL')
         #DF_Data_all_mean = DFDescriber.MeteoVarsAggregatorForDunkelflauteEvents(dunkelflaute_dates_PL, ['GHI_0000m', 'ssrd'], 'PL')
 
         #DF_Data_all_mean = DFDescriber.MeteoVarsAggregatorForDunkelflauteEvents(dunkelflaute_dates_PL, ['WS-_0010m', 'ws10'], 'PL')
 
+    if config.DescriberMSLDataCalculatorRef:
+        dunkelflaute_ref_dates_DE = pd.read_csv('reference_dates_DE.csv')
+
+        #DF_ref_Data_all_mean = DFDescriber.MeteoVarsAggregatorForDunkelflauteEventsRefDates(dunkelflaute_ref_dates_DE, ['MSL_0000m', 'msl'], 'DE')
+        #DF_ref_Data_all_mean = DFDescriber.MeteoVarsAggregatorForDunkelflauteEventsRefDates(dunkelflaute_ref_dates_DE, ['TA-_0002m', 't2m'], 'DE')
+        #DF_ref_Data_all_mean = DFDescriber.MeteoVarsAggregatorForDunkelflauteEventsRefDates(dunkelflaute_ref_dates_DE, ['WS-_0010m', 'ws10'], 'DE')
+
+        #DF_ref_Data_all_mean = DFDescriber.MeteoVarsAggregatorForDunkelflauteEventsRefDates(dunkelflaute_ref_dates_DE, ['WS-_0100m', 'var_100_metre_wind_speed'], 'DE')
+        #DF_ref_Data_all_mean = DFDescriber.MeteoVarsAggregatorForDunkelflauteEventsRefDates(dunkelflaute_ref_dates_DE,
+        #                                                                        ['GHI_0000m', 'ssrd'], 'DE')
+
+        one_day_before_dunkelflaute_dates_DE = pd.read_csv('day_before_DF_dates_DE.csv')
+
+        #DF_ref_Data_all_mean = DFDescriber.MeteoVarsAggregatorForDunkelflauteEventsDayBeforeDates(one_day_before_dunkelflaute_dates_DE, ['MSL_0000m', 'msl'], 'DE')
+        DF_Data_all_mean = DFDescriber.MeteoVarsAggregatorForDunkelflauteEventsDayBeforeDates(one_day_before_dunkelflaute_dates_DE, ['TA-_0002m', 't2m'], 'DE')
+        DF_Data_all_mean = DFDescriber.MeteoVarsAggregatorForDunkelflauteEventsDayBeforeDates(one_day_before_dunkelflaute_dates_DE, ['WS-_0010m', 'ws10'], 'DE')
+
+        DF_Data_all_mean = DFDescriber.MeteoVarsAggregatorForDunkelflauteEventsDayBeforeDates(one_day_before_dunkelflaute_dates_DE, ['WS-_0100m', 'var_100_metre_wind_speed'], 'DE')
+        DF_Data_all_mean = DFDescriber.MeteoVarsAggregatorForDunkelflauteEventsDayBeforeDates(one_day_before_dunkelflaute_dates_DE,
+                                                                                ['GHI_0000m', 'ssrd'], 'DE')
 
         print(1)
-    if config.DescriberMSLPlotter:
-        import netCDF4 as nc
+
+    if config.DescriberHeatmapDFPlotter:
 
         fn = '/Volumes/PortableSSD/download19790102/H_ERA5_ECMW_T639_GHI_0000m_Euro_025d_S197901010000_E197901312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
         ds = nc.Dataset(fn)
@@ -738,6 +789,8 @@ if config.Describer:
             config.file_path_ext_ssd + 'DF_Data_all_mean_mslDE.csv', header=None, index_col=None, sep=';')
         DF_Data_all_mean_t2m_DE = pd.read_csv(
             config.file_path_ext_ssd + '/means/' + 'DF_Data_all_mean_t2mDE.csv', header=None, index_col=None, sep=';')
+        DF_Data_all_mean_t2m_DE = DF_Data_all_mean_t2m_DE - 273.15
+
         DF_Data_all_mean_ssrdDE = pd.read_csv(
             config.file_path_ext_ssd + '/means/' + 'DF_Data_all_mean_ssrdDE.csv', header=None, index_col=None, sep=';')
         DF_Data_all_mean_var_100_metre_wind_speedDE = pd.read_csv(
@@ -757,6 +810,9 @@ if config.Describer:
             config.file_path_ext_ssd + '/means/' + 'DF_Data_all_mean_mslFR.csv', header=None, index_col=None, sep=';')
         DF_Data_all_mean_t2m_FR = pd.read_csv(
             config.file_path_ext_ssd + '/means/' + 'DF_Data_all_mean_t2mFR.csv', header=None, index_col=None, sep=';')
+
+        DF_Data_all_mean_t2m_FR = DF_Data_all_mean_t2m_FR - 273.15
+
         DF_Data_all_mean_ssrdFR = pd.read_csv(
             config.file_path_ext_ssd + '/means/' + 'DF_Data_all_mean_ssrdFR.csv', header=None, index_col=None, sep=';')
         DF_Data_all_mean_var_100_metre_wind_speedFR = pd.read_csv(
@@ -776,6 +832,9 @@ if config.Describer:
             config.file_path_ext_ssd + '/means/' + 'DF_Data_all_mean_mslNL.csv', header=None, index_col=None, sep=';')
         DF_Data_all_mean_t2m_NL = pd.read_csv(
             config.file_path_ext_ssd + '/means/' + 'DF_Data_all_mean_t2mNL.csv', header=None, index_col=None, sep=';')
+
+        DF_Data_all_mean_t2m_NL = DF_Data_all_mean_t2m_NL - 273.15
+
         DF_Data_all_mean_ssrdNL = pd.read_csv(
             config.file_path_ext_ssd + '/means/' + 'DF_Data_all_mean_ssrdNL.csv', header=None, index_col=None, sep=';')
         DF_Data_all_mean_var_100_metre_wind_speedNL = pd.read_csv(
@@ -796,6 +855,9 @@ if config.Describer:
             config.file_path_ext_ssd + '/means/' + 'DF_Data_all_mean_mslPL.csv', header=None, index_col=None, sep=';')
         DF_Data_all_mean_t2m_PL = pd.read_csv(
             config.file_path_ext_ssd + '/means/' + 'DF_Data_all_mean_t2mPL.csv', header=None, index_col=None, sep=';')
+
+        DF_Data_all_mean_t2m_PL = DF_Data_all_mean_t2m_PL - 273.15
+
         DF_Data_all_mean_ssrdPL = pd.read_csv(
             config.file_path_ext_ssd + '/means/' + 'DF_Data_all_mean_ssrdPL.csv', header=None, index_col=None, sep=';')
         DF_Data_all_mean_var_100_metre_wind_speedPL = pd.read_csv(
@@ -811,50 +873,61 @@ if config.Describer:
         DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_ws10PL, 'Poland', 'Wind speed (10m)', longitude, latitude)
 
 
+    if config.DescriberHeatmapRefDateDFPlotter:
+
+        fn = '/Volumes/PortableSSD/download19790102/H_ERA5_ECMW_T639_GHI_0000m_Euro_025d_S197901010000_E197901312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
+        ds = nc.Dataset(fn)
+        #
+        time = ds['time'][:]
+        longitude = ds['longitude'][:]
+        latitude = ds['latitude'][:]
+
+        # ++++ Reference Plots +++++
+        # +++ DE +++
+        DF_ref_Data_all_mean_msl_DE = pd.read_csv(
+            config.file_path_ext_ssd + 'DF_ref_Data_all_mean_mslDE.csv', header=None, index_col=None, sep=';')
+        DF_ref_Data_all_mean_t2m_DE = pd.read_csv(
+            config.file_path_ext_ssd + 'DF_ref_Data_all_mean_t2mDE.csv', header=None, index_col=None, sep=';')
+        DF_ref_Data_all_mean_t2m_DE = DF_ref_Data_all_mean_t2m_DE - 273.15
+
+        DF_ref_Data_all_mean_ssrdDE = pd.read_csv(
+            config.file_path_ext_ssd + 'DF_ref_Data_all_mean_ssrdDE.csv', header=None, index_col=None, sep=';')
+        DF_ref_Data_all_mean_var_100_metre_wind_speedDE = pd.read_csv(
+            config.file_path_ext_ssd + 'DF_ref_Data_all_mean_var_100_metre_wind_speedDE.csv', header=None, index_col=None, sep=';')
+        DF_ref_Data_all_mean_ws10DE = pd.read_csv(
+            config.file_path_ext_ssd + 'DF_ref_Data_all_mean_ws10DE.csv', header=None, index_col=None, sep=';')
+
+
+        DFDescriber.MeteoVarsPlotterRefDate(DF_ref_Data_all_mean_msl_DE, 'Germany', 'Mean sea level pressure', longitude, latitude)
+        DFDescriber.MeteoVarsPlotterRefDate(DF_ref_Data_all_mean_t2m_DE, 'Germany', 'Temperature (2m)', longitude, latitude)
+        DFDescriber.MeteoVarsPlotterRefDate(DF_ref_Data_all_mean_ssrdDE, 'Germany', 'Solar radiation', longitude, latitude)
+        DFDescriber.MeteoVarsPlotterRefDate(DF_ref_Data_all_mean_var_100_metre_wind_speedDE, 'Germany', 'Wind speed (100m)', longitude, latitude)
+        DFDescriber.MeteoVarsPlotterRefDate(DF_ref_Data_all_mean_ws10DE, 'Germany', 'Wind speed (10m)', longitude, latitude)
+
+        # ++++ 24 hrs before DF Plots +++++
+
+        DF_day_bf_Data_all_mean_msl_DE = pd.read_csv(
+            config.file_path_ext_ssd + 'DF_day_bf_Data_all_mean_mslDE.csv', header=None, index_col=None, sep=';')
+        DF_day_bf_Data_all_mean_t2m_DE = pd.read_csv(
+            config.file_path_ext_ssd + 'DF_day_bf_Data_all_mean_t2mDE.csv', header=None, index_col=None, sep=';')
+        DF_day_bf_Data_all_mean_t2m_DE = DF_day_bf_Data_all_mean_t2m_DE - 273.15
+
+        DF_day_bf_Data_all_mean_ssrdDE = pd.read_csv(
+            config.file_path_ext_ssd + 'DF_day_bf_Data_all_mean_ssrdDE.csv', header=None, index_col=None, sep=';')
+        DF_day_bf_Data_all_mean_var_100_metre_wind_speedDE = pd.read_csv(
+            config.file_path_ext_ssd + 'DF_day_bf_Data_all_mean_var_100_metre_wind_speedDE.csv', header=None, index_col=None, sep=';')
+        DF_day_bf_Data_all_mean_ws10DE = pd.read_csv(
+            config.file_path_ext_ssd + 'DF_day_bf_Data_all_mean_ws10DE.csv', header=None, index_col=None, sep=';')
+
+
+        DFDescriber.MeteoVarsPlotterBeforeDF(DF_day_bf_Data_all_mean_msl_DE, 'Germany', 'Mean sea level pressure', longitude, latitude)
+        DFDescriber.MeteoVarsPlotterBeforeDF(DF_day_bf_Data_all_mean_t2m_DE, 'Germany', 'Temperature (2m)', longitude, latitude)
+        DFDescriber.MeteoVarsPlotterBeforeDF(DF_day_bf_Data_all_mean_ssrdDE, 'Germany', 'Solar radiation', longitude, latitude)
+        DFDescriber.MeteoVarsPlotterBeforeDF(DF_day_bf_Data_all_mean_var_100_metre_wind_speedDE, 'Germany', 'Wind speed (100m)', longitude, latitude)
+        DFDescriber.MeteoVarsPlotterBeforeDF(DF_day_bf_Data_all_mean_ws10DE, 'Germany', 'Wind speed (10m)', longitude, latitude)
+
         print(1)
 
 # sum of capacities below ...% (?)
 
 #ETL.FileDownloadInsights(config.file_path_energy_vars, config.file_names_energy_vars)
-
-import netCDF4 as nc
-fn = '/Users/franziska/PycharmProjects/DunkelflauteDescriberAndClassifier/download/H_ERA5_ECMW_T639_GHI_0000m_Euro_025d_S197901010000_E197901312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
-ds = nc.Dataset(fn)
-
-time = ds['time'][:]
-longitude = ds['longitude'][:]
-latitude = ds['latitude'][:]
-ssrd = ds['ssrd'][:]
-
-name = list(ds.variables.values())[3].name
-
-import numpy as np
-
-ssrd_data = ssrd.filled(np.NaN)
-
-unit = ds.variables['time'].units
-
-import datetime
-
-ref_date = datetime.datetime(int(unit[12:16]), int(unit[17:19]), int(unit[20:22]))
-start_date = ref_date + datetime.timedelta(hours = int(ds.variables['time'][0]))
-
-dates = pd.Series(start_date)
-for d in range(1,len(time)):
-    dates = dates.append(pd.Series(ref_date + datetime.timedelta(hours = int(ds.variables['time'][d]))))
-
-
-file_names = ['H_ERA5_ECMW_T639_GHI_0000m_Euro_025d_S197901010000_E197901312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc','H_ERA5_ECMW_T639_MSL_0000m_Euro_025d_S197901010000_E197901312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc','H_ERA5_ECMW_T639_MSL_0000m_Euro_025d_S197901010000_E197912312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc','H_ERA5_ECMW_T639_SPV_0000m_Euro_025d_S197901010000_E197912312300_CFR_MAP_01h_NA-_noc_org_NA_NA---_NA---_PhM02.nc','H_ERA5_ECMW_T639_TA-_0002m_Euro_025d_S197901010000_E197912312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc','H_ERA5_ECMW_T639_TP-_0000m_Euro_025d_S197901010700_E197912312300_ACC_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc','H_ERA5_ECMW_T639_WOF_0100m_Euro_025d_S197901010000_E197912312300_CFR_MAP_01h_NA-_noc_org_NA_NA---_NA---_PhM01.nc','H_ERA5_ECMW_T639_WON_0100m_Euro_025d_S197901010000_E197912312300_CFR_MAP_01h_NA-_noc_org_NA_NA---_NA---_PhM01.nc','H_ERA5_ECMW_T639_WS-_0010m_Euro_025d_S197901010000_E197912312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc','H_ERA5_ECMW_T639_WS-_0100m_Euro_025d_S197901010000_E197912312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc']
-
-path = '/Users/franziska/PycharmProjects/DunkelflauteDescriberAndClassifier/download/'
-
-for f in file_names:
-    print(list(ds.variables.values())[3].name)
-
-for f in file_names:
-    ds = nc.Dataset(path + f)
-    print(ds)
-    print(list(ds.variables.values())[3].name)
-
-
-#todo: write function that adds all variables up in

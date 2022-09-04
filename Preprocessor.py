@@ -768,3 +768,33 @@ def HistPlotterDunkelflauteEventsSeveralThresholdsOneCountry(dunkelflaute_freq_c
 
     plt.savefig('HistogramOfDunkelflauteEventsFor' + country_name + 'threshold ' + threshold + '_'+ str(datetime.today()) + '.png')
     plt.show()
+
+
+def ReferenceDateNoneDFFinder(dunkelflaute_dates):
+
+    # Drop dates of first year (1979)
+    dunkelflaute_dates_1980_to_2021 = dunkelflaute_dates['0'][dunkelflaute_dates['0'].apply(lambda x: x.year) >= 1980]
+
+    dunkelflaute_dates_1980_to_2021_df = pd.DataFrame(dunkelflaute_dates_1980_to_2021.values,
+                                                         columns=['Dates_orig'])
+
+    dunkelflaute_dates_1980_to_2021_df['Dates_year_before'] = dunkelflaute_dates_1980_to_2021_df['Dates_orig'].apply(lambda x: x - relativedelta(years=1))
+
+    ref_dates_in_DF_log = dunkelflaute_dates_1980_to_2021_df['Dates_year_before'].isin(dunkelflaute_dates_1980_to_2021_df['Dates_orig'])
+
+    ref_dates_in_DF = dunkelflaute_dates_1980_to_2021_df['Dates_year_before'][ref_dates_in_DF_log == False]
+
+    return ref_dates_in_DF
+
+def DayBeforeDFFinder(dunkelflaute_dates):
+
+    dunkelflaute_dates_1980_to_2021_df = pd.DataFrame(dunkelflaute_dates['0'].values,
+                                                         columns=['Dates_orig'])
+
+    dunkelflaute_dates_1980_to_2021_df['Dates_day_before'] = dunkelflaute_dates_1980_to_2021_df['Dates_orig'].apply(lambda x: x - relativedelta(days=1))
+
+    ref_dates_in_DF_log = dunkelflaute_dates_1980_to_2021_df['Dates_day_before'].isin(dunkelflaute_dates_1980_to_2021_df['Dates_orig'])
+
+    ref_dates_in_DF = dunkelflaute_dates_1980_to_2021_df['Dates_day_before'][ref_dates_in_DF_log == False]
+
+    return ref_dates_in_DF

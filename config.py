@@ -27,16 +27,17 @@ Preprocessor_calc_mov_avg = False
 Preprocessor_read_data_mov_avg = False
 Preprocessor_installed_capacity_corrector = False
 calc_summary_measures = False
+
+Preprocessor_comparison_dates = False
 # If true, the Dunkelflaute Describer is executed
 Describer = True
 # If true, the individual components of the Dunkelflaute Describer is executed
 
-DescriberMSLDataCalculator = True
-DescriberMSLPlotter = True
-DescriberTAPlotter = True
-DescriberWS10Plotter = True
-DescriberWS100Plotter = True
-DescriberGHIPlotter = True
+DescriberMSLDataCalculator = False
+DescriberMSLDataCalculatorRef = False
+DescriberHeatmapDFPlotter = True
+DescriberHeatmapRefDateDFPlotter = False
+
 
 """
 Specify file locations and file names (which should normally not change)
