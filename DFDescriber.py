@@ -228,7 +228,7 @@ def MeteoVarsAggregatorForDunkelflauteEventsDayBeforeDates(dunkelflaute_dates_co
 
 
 
-def MeteoVarsPlotter(DF_Data_all_mean,country_name, var_name, longitude, latitude):
+def MeteoVarsPlotter(DF_Data_all_mean,country_name, var_name, longitude, latitude, label):
 
     DF_Data_all_mean_df = pd.DataFrame(DF_Data_all_mean)
     DF_Data_all_mean_df.columns = longitude
@@ -248,13 +248,13 @@ def MeteoVarsPlotter(DF_Data_all_mean,country_name, var_name, longitude, latitud
     # gdf_bn.plot(figsize=(20, 15), ax=ax, color="red")
     # gdf_lb.plot(figsize=(20, 15), ax=ax, color="yellow")
 
-    fig, ax = plt.subplots()
-    sns.heatmap(DF_Data_all_mean)
-    ax.set_ylabel('Latitude')
-    ax.set_xlabel('Longitude')
+    fig, ax = plt.subplots(figsize = (8,6))
+    sns.heatmap(DF_Data_all_mean, cbar_kws={'label': label})
+    ax.set_ylabel('Latitude', fontsize=10)
+    ax.set_xlabel('Longitude', fontsize=10)
     plt.title(
         'Mean of ' + str(var_name) + ' in case of Dunkelflaute events for ' + country_name + ' with threshold ' + str(
-            config.Capacity_Threshold_DF), fontsize=9)
+            config.Capacity_Threshold_DF), fontsize=10)
     plt.savefig(
         'Plot_mean_' + str(var_name) + '_' + str(country_name) + '.png')
     plt.show()
@@ -262,36 +262,36 @@ def MeteoVarsPlotter(DF_Data_all_mean,country_name, var_name, longitude, latitud
     print(1)
     return
 
-def MeteoVarsPlotterRefDate(DF_Data_all_mean,country_name, var_name, longitude, latitude):
+def MeteoVarsPlotterRefDate(DF_Data_all_mean,country_name, var_name, longitude, latitude, label):
 
     DF_Data_all_mean_df = pd.DataFrame(DF_Data_all_mean)
     DF_Data_all_mean_df.columns = longitude
     DF_Data_all_mean_df.index = latitude
 
-    fig, ax = plt.subplots()
-    sns.heatmap(DF_Data_all_mean)
-    ax.set_ylabel('Latitude')
-    ax.set_xlabel('Longitude')
+    fig, ax = plt.subplots(figsize = (8,6))
+    sns.heatmap(DF_Data_all_mean, cbar_kws={'label': label})
+    ax.set_ylabel('Latitude', fontsize=10)
+    ax.set_xlabel('Longitude', fontsize=10)
     plt.title(
-        'Mean of ' + str(var_name) + ' in case of no Dunkelflaute events for ' + country_name, fontsize=9)
+        'Mean of ' + str(var_name) + ' in case of no Dunkelflaute events for ' + country_name, fontsize=10)
     plt.savefig(
         'Plot_mean_reference_no_DF_' + str(var_name) + '_' + str(country_name) + '.png')
     plt.show()
 
     return
 
-def MeteoVarsPlotterBeforeDF(DF_Data_all_mean,country_name, var_name, longitude, latitude):
+def MeteoVarsPlotterBeforeDF(DF_Data_all_mean,country_name, var_name, longitude, latitude, label):
 
     DF_Data_all_mean_df = pd.DataFrame(DF_Data_all_mean)
     DF_Data_all_mean_df.columns = longitude
     DF_Data_all_mean_df.index = latitude
 
-    fig, ax = plt.subplots()
-    sns.heatmap(DF_Data_all_mean)
-    ax.set_ylabel('Latitude')
-    ax.set_xlabel('Longitude')
+    fig, ax = plt.subplots(figsize = (8,6))
+    sns.heatmap(DF_Data_all_mean, cbar_kws={'label': label})
+    ax.set_ylabel('Latitude', fontsize=10)
+    ax.set_xlabel('Longitude', fontsize=10)
     plt.title(
-        'Mean of ' + str(var_name) + ' 24 hours before Dunkelflaute event for ' + country_name, fontsize=9)
+        'Mean of ' + str(var_name) + ' 24 hours before Dunkelflaute event for ' + country_name, fontsize=10)
     plt.savefig(
         'Plot_mean_24hrs_before_DF_' + str(var_name) + '_' + str(country_name) + '.png')
     plt.show()

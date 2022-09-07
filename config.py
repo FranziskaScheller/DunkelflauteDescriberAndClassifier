@@ -36,7 +36,7 @@ Describer = True
 DescriberMSLDataCalculator = False
 DescriberMSLDataCalculatorRef = False
 DescriberHeatmapDFPlotter = True
-DescriberHeatmapRefDateDFPlotter = False
+DescriberHeatmapRefDateDFPlotter = True
 
 
 """

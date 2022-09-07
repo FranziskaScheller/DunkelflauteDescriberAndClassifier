@@ -19,7 +19,33 @@ import csv
 import netCDF4 as nc
 from sklearn.linear_model import LinearRegression
 
+from geopy.geocoders import Nominatim
 
+
+# initialize Nominatim API
+geolocator = Nominatim(user_agent="geoapiExercises")
+
+# Latitude & Longitude input
+Latitude = "50.00"
+Longitude = "8.00"
+
+location = geolocator.reverse(Latitude + "," + Longitude)
+
+address = location.raw['address']
+
+# traverse the data
+city = address.get('city', '')
+state = address.get('state', '')
+country = address.get('country', '')
+
+fn = '/Volumes/PortableSSD/download19790102/H_ERA5_ECMW_T639_GHI_0000m_Euro_025d_S197901010000_E197901312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
+ds = nc.Dataset(fn)
+#
+time = ds['time'][:]
+longitude = ds['longitude'][:]
+latitude = ds['latitude'][:]
+
+print(1)
 # import cdsapi
 #
 # c = cdsapi.Client()
@@ -799,11 +825,11 @@ if config.Describer:
             config.file_path_ext_ssd + '/means/' + 'DF_Data_all_mean_ws10DE.csv', header=None, index_col=None, sep=';')
 
 
-        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_msl_DE, 'Germany', 'Mean sea level pressure', longitude, latitude)
-        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_t2m_DE, 'Germany', 'Temperature (2m)', longitude, latitude)
-        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_ssrdDE, 'Germany', 'Solar radiation', longitude, latitude)
-        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_var_100_metre_wind_speedDE, 'Germany', 'Wind speed (100m)', longitude, latitude)
-        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_ws10DE, 'Germany', 'Wind speed (10m)', longitude, latitude)
+        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_msl_DE, 'Germany', 'Mean sea level pressure', longitude, latitude, 'Mean sea level pressure [hPa]')
+        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_t2m_DE, 'Germany', 'Temperature (2m)', longitude, latitude, 'Temperature [$^\circ$C]')
+        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_ssrdDE, 'Germany', 'Solar radiation', longitude, latitude, 'Solar radiation [W m $^{-2}$]')
+        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_var_100_metre_wind_speedDE, 'Germany', 'Wind speed (100m)', longitude, latitude, 'Wind speed [m/s]')
+        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_ws10DE, 'Germany', 'Wind speed (10m)', longitude, latitude, 'Wind speed [m/s]')
 
         # +++ FR +++
         DF_Data_all_mean_msl_FR = pd.read_csv(
@@ -821,11 +847,11 @@ if config.Describer:
             config.file_path_ext_ssd + '/means/' + 'DF_Data_all_mean_ws10FR.csv', header=None, index_col=None, sep=';')
 
 
-        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_msl_FR, 'France', 'Mean sea level pressure', longitude, latitude)
-        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_t2m_FR, 'France', 'Temperature (2m)', longitude, latitude)
-        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_ssrdFR, 'France', 'Solar radiation', longitude, latitude)
-        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_var_100_metre_wind_speedFR, 'France', 'Wind speed (100m)', longitude, latitude)
-        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_ws10FR, 'France', 'Wind speed (10m)', longitude, latitude)
+        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_msl_FR, 'France', 'Mean sea level pressure', longitude, latitude, 'Mean sea level pressure [hPa]')
+        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_t2m_FR, 'France', 'Temperature (2m)', longitude, latitude, 'Temperature [$^\circ$C]')
+        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_ssrdFR, 'France', 'Solar radiation', longitude, latitude, 'Solar radiation [W m $^{-2}$]')
+        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_var_100_metre_wind_speedFR, 'France', 'Wind speed (100m)', longitude, latitude, 'Wind speed [m/s]')
+        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_ws10FR, 'France', 'Wind speed (10m)', longitude, latitude, 'Wind speed [m/s]')
 
         # +++ NL +++
         DF_Data_all_mean_msl_NL = pd.read_csv(
@@ -843,11 +869,11 @@ if config.Describer:
             config.file_path_ext_ssd + '/means/' + 'DF_Data_all_mean_ws10NL.csv', header=None, index_col=None, sep=';')
 
 
-        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_msl_NL, 'Netherlands', 'Mean sea level pressure', longitude, latitude)
-        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_t2m_NL, 'Netherlands', 'Temperature (2m)', longitude, latitude)
-        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_ssrdNL, 'Netherlands', 'Solar radiation', longitude, latitude)
-        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_var_100_metre_wind_speedNL, 'Netherlands', 'Wind speed (100m)', longitude, latitude)
-        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_ws10NL, 'Netherlands', 'Wind speed (10m)', longitude, latitude)
+        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_msl_NL, 'Netherlands', 'Mean sea level pressure', longitude, latitude, 'Mean sea level pressure [hPa]')
+        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_t2m_NL, 'Netherlands', 'Temperature (2m)', longitude, latitude, 'Temperature [$^\circ$C]')
+        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_ssrdNL, 'Netherlands', 'Solar radiation', longitude, latitude, 'Solar radiation [W m $^{-2}$]')
+        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_var_100_metre_wind_speedNL, 'Netherlands', 'Wind speed (100m)', longitude, latitude, 'Wind speed [m/s]')
+        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_ws10NL, 'Netherlands', 'Wind speed (10m)', longitude, latitude, 'Wind speed [m/s]')
 
         # +++ PL +++
 
@@ -866,11 +892,11 @@ if config.Describer:
             config.file_path_ext_ssd + '/means/' + 'DF_Data_all_mean_ws10PL.csv', header=None, index_col=None, sep=';')
 
 
-        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_msl_PL, 'Poland', 'Mean sea level pressure', longitude, latitude)
-        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_t2m_PL, 'Poland', 'Temperature (2m)', longitude, latitude)
-        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_ssrdPL, 'Poland', 'Solar radiation', longitude, latitude)
-        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_var_100_metre_wind_speedPL, 'Poland', 'Wind speed (100m)', longitude, latitude)
-        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_ws10PL, 'Poland', 'Wind speed (10m)', longitude, latitude)
+        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_msl_PL, 'Poland', 'Mean sea level pressure', longitude, latitude, 'Mean sea level pressure [hPa]')
+        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_t2m_PL, 'Poland', 'Temperature (2m)', longitude, latitude, 'Temperature [$^\circ$C]')
+        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_ssrdPL, 'Poland', 'Solar radiation', longitude, latitude, 'Solar radiation [W m $^{-2}$]')
+        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_var_100_metre_wind_speedPL, 'Poland', 'Wind speed (100m)', longitude, latitude, 'Wind speed [m/s]')
+        DFDescriber.MeteoVarsPlotter(DF_Data_all_mean_ws10PL, 'Poland', 'Wind speed (10m)', longitude, latitude, 'Wind speed [m/s]')
 
 
     if config.DescriberHeatmapRefDateDFPlotter:
@@ -898,11 +924,11 @@ if config.Describer:
             config.file_path_ext_ssd + 'DF_ref_Data_all_mean_ws10DE.csv', header=None, index_col=None, sep=';')
 
 
-        DFDescriber.MeteoVarsPlotterRefDate(DF_ref_Data_all_mean_msl_DE, 'Germany', 'Mean sea level pressure', longitude, latitude)
-        DFDescriber.MeteoVarsPlotterRefDate(DF_ref_Data_all_mean_t2m_DE, 'Germany', 'Temperature (2m)', longitude, latitude)
-        DFDescriber.MeteoVarsPlotterRefDate(DF_ref_Data_all_mean_ssrdDE, 'Germany', 'Solar radiation', longitude, latitude)
-        DFDescriber.MeteoVarsPlotterRefDate(DF_ref_Data_all_mean_var_100_metre_wind_speedDE, 'Germany', 'Wind speed (100m)', longitude, latitude)
-        DFDescriber.MeteoVarsPlotterRefDate(DF_ref_Data_all_mean_ws10DE, 'Germany', 'Wind speed (10m)', longitude, latitude)
+        DFDescriber.MeteoVarsPlotterRefDate(DF_ref_Data_all_mean_msl_DE, 'Germany', 'Mean sea level pressure', longitude, latitude, 'Mean sea level pressure [hPa]')
+        DFDescriber.MeteoVarsPlotterRefDate(DF_ref_Data_all_mean_t2m_DE, 'Germany', 'Temperature (2m)', longitude, latitude, 'Temperature [$^\circ$C]')
+        DFDescriber.MeteoVarsPlotterRefDate(DF_ref_Data_all_mean_ssrdDE, 'Germany', 'Solar radiation', longitude, latitude, 'Solar radiation [W m $^{-2}$]')
+        DFDescriber.MeteoVarsPlotterRefDate(DF_ref_Data_all_mean_var_100_metre_wind_speedDE, 'Germany', 'Wind speed (100m)', longitude, latitude, 'Wind speed [m/s]')
+        DFDescriber.MeteoVarsPlotterRefDate(DF_ref_Data_all_mean_ws10DE, 'Germany', 'Wind speed (10m)', longitude, latitude, 'Wind speed [m/s]')
 
         # ++++ 24 hrs before DF Plots +++++
 
@@ -920,11 +946,11 @@ if config.Describer:
             config.file_path_ext_ssd + 'DF_day_bf_Data_all_mean_ws10DE.csv', header=None, index_col=None, sep=';')
 
 
-        DFDescriber.MeteoVarsPlotterBeforeDF(DF_day_bf_Data_all_mean_msl_DE, 'Germany', 'Mean sea level pressure', longitude, latitude)
-        DFDescriber.MeteoVarsPlotterBeforeDF(DF_day_bf_Data_all_mean_t2m_DE, 'Germany', 'Temperature (2m)', longitude, latitude)
-        DFDescriber.MeteoVarsPlotterBeforeDF(DF_day_bf_Data_all_mean_ssrdDE, 'Germany', 'Solar radiation', longitude, latitude)
-        DFDescriber.MeteoVarsPlotterBeforeDF(DF_day_bf_Data_all_mean_var_100_metre_wind_speedDE, 'Germany', 'Wind speed (100m)', longitude, latitude)
-        DFDescriber.MeteoVarsPlotterBeforeDF(DF_day_bf_Data_all_mean_ws10DE, 'Germany', 'Wind speed (10m)', longitude, latitude)
+        DFDescriber.MeteoVarsPlotterBeforeDF(DF_day_bf_Data_all_mean_msl_DE, 'Germany', 'Mean sea level pressure', longitude, latitude, 'Mean sea level pressure [hPa]')
+        DFDescriber.MeteoVarsPlotterBeforeDF(DF_day_bf_Data_all_mean_t2m_DE, 'Germany', 'Temperature (2m)', longitude, latitude, 'Temperature [$^\circ$C]')
+        DFDescriber.MeteoVarsPlotterBeforeDF(DF_day_bf_Data_all_mean_ssrdDE, 'Germany', 'Solar radiation', longitude, latitude, 'Solar radiation [W m $^{-2}$]')
+        DFDescriber.MeteoVarsPlotterBeforeDF(DF_day_bf_Data_all_mean_var_100_metre_wind_speedDE, 'Germany', 'Wind speed (100m)', longitude, latitude, 'Wind speed [m/s]')
+        DFDescriber.MeteoVarsPlotterBeforeDF(DF_day_bf_Data_all_mean_ws10DE, 'Germany', 'Wind speed (10m)', longitude, latitude, 'Wind speed [m/s]')
 
         print(1)
 
