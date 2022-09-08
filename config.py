@@ -38,6 +38,7 @@ DescriberMSLDataCalculatorRef = False
 DescriberHeatmapDFPlotter = True
 DescriberHeatmapRefDateDFPlotter = True
 
+FeatureCreatorLocationAdder = False
 
 """
 Specify file locations and file names (which should normally not change)
