@@ -21,7 +21,7 @@ address = location.raw['address']
 # traverse the data
 city = address.get('city', '')
 state = address.get('state', '')
-country = address.get('country', '')
+#country = address.get('country', '')
 
 fn = '/Volumes/PortableSSD/download19790102/H_ERA5_ECMW_T639_GHI_0000m_Euro_025d_S197901010000_E197901312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
 ds = nc.Dataset(fn)
@@ -153,8 +153,25 @@ def MeteoVarMeanCalculator(meteo_var, country, location_df):
 #      encoding='latin1', index=False,
 #      quoting=csv.QUOTE_NONE)
 
+features_mean_std_mslDeutschland79to90 = pd.read_csv(config.file_path_ext_ssd + 'features_mean_std_mslFrance79to90.csv', sep = ';', encoding='latin1')
+features_mean_std_mslDeutschland91to00 = pd.read_csv(config.file_path_ext_ssd + 'features_mean_std_mslFrance91to00.csv', sep = ';', encoding='latin1')
+features_mean_std_mslDeutschland01to11 = pd.read_csv(config.file_path_ext_ssd + 'features_mean_std_mslFrance01to10.csv', sep = ';', encoding='latin1')
+features_mean_std_mslDeutschland11to21 = pd.read_csv(config.file_path_ext_ssd + 'features_mean_std_mslFrance11to21.csv', sep = ';', encoding='latin1')
+
+features_mean_std_mslDeutschland = pd.concat([features_mean_std_mslDeutschland79to90, features_mean_std_mslDeutschland91to00, features_mean_std_mslDeutschland01to11, features_mean_std_mslDeutschland11to21])
+
+pd.DataFrame(features_mean_std_mslDeutschland).to_csv(
+      config.file_path_ext_ssd + 'features_mean_std_' + 'msl' + 'France' + '.csv', sep=';', index = False,
+          encoding='latin1',
+          quoting=csv.QUOTE_NONE)
+
+msl_aggr_FR_79to21 = pd.read_csv(config.file_path_ext_ssd + 'features_mean_std_mslFrance.csv', sep=';')
+
 #test = MeteoVarMeanCalculator(['TA-_0002m', 't2m'], country, location_df_incl_countries)
-#test = MeteoVarMeanCalculator(['MSL_0000m', 'msl'], country, location_df_incl_countries)
+#test = MeteoVarMeanCalculator(['MSL_0000m', 'msl'], 'Polska', location_df_incl_countries)
+#test = MeteoVarMeanCalculator(['MSL_0000m', 'msl'], 'Nederland', location_df_incl_countries)
+#test = MeteoVarMeanCalculator(['MSL_0000m', 'msl'], 'France', location_df_incl_countries)
+
 
 
 ### Create MasterTable ###
