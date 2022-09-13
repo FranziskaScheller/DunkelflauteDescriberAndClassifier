@@ -11,6 +11,7 @@ from sklearn.model_selection import cross_val_score
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import OneHotEncoder
 
 ### Create MasterTable ###
 msl_aggr_DE_79to21 = pd.read_csv(config.file_path_ext_ssd + 'features_mean_std_mslDeutschland.csv', sep=';')
@@ -73,7 +74,8 @@ mastertableDFclassifier = mastertableDFclassifier.merge(msl_aggr_FR_79to21, on =
 mastertableDFclassifier['DF_Indicator'] = DF_indices_0_1_encoding
 mastertableDFclassifier['Month'] = mastertableDFclassifier['Date'].apply(lambda x: x.month)
 mastertableDFclassifier['Hour'] = mastertableDFclassifier['Date'].apply(lambda x: x.hour)
-
+ohe = OneHotEncoder().fit_transform(X = pd.DataFrame(mastertableDFclassifier['Date'].apply(lambda x: x.month).values)).toarray()
+mastertableDFclassifier[['Ind_Jan', 'Ind_Feb', 'Ind_Mar', 'Ind_Apr', 'Ind_May', 'Ind_Jun', 'Ind_Jul', 'Ind_Aug', 'Ind_Sep', 'Ind_Oct', 'Ind_Nov', 'Ind_Dec']] = ohe
 # --- Add Lags ---
 daily_mean = mastertableDFclassifier.set_index('Date')[['mslp_mean', 'mslp_std']].groupby(pd.Grouper(freq='d')).mean().rename({'mslp_mean': 'mslp_daily_mean', 'mslp_std': 'mslp_daily_std' }, axis = 'columns').reset_index()
 mastertableDFclassifier = mastertableDFclassifier.merge(daily_mean, on = 'Date', how = 'left')
@@ -134,7 +136,7 @@ mastertableDFclassifier = mastertableDFclassifier.reset_index().drop(columns = '
 
 #X = mastertableDFclassifier[['mslp_mean', 'mslp_std', 't2m_mean', 'Month', 'Lag_120h_t2m_mean', 'Lag_120h_mslp_std', 'mslp_mean_PL', 'mslp_std_PL', 'mslp_mean_NL', 'mslp_std_NL', 'mslp_mean_FR', 'mslp_std_FR', 'Lag_120h_mslp_mean_PL', 'Lag_120h_mslp_std_PL', 'Lag_120h_mslp_mean_NL', 'Lag_120h_mslp_std_NL', 'Lag_120h_mslp_mean_FR', 'Lag_120h_mslp_std_FR']]
 #X = mastertableDFclassifier[['mslp_mean','mslp_std', 't2m_mean', 'Month','Lag_1h_mslp_mean', 'Lag_2h_mslp_mean', 'Lag_5h_mslp_mean', 'Lag_1h_mslp_std', 'Lag_2h_mslp_std' , 'Lag_5h_mslp_std', 'Lag_120h_t2m_mean', 'Lag_120h_mslp_std', 'Lag_120h_mslp_mean_NL', 'Lag_120h_mslp_std_NL']]
-X = mastertableDFclassifier[['mslp_mean','mslp_std', 't2m_mean', 'Month', 'mslp_daily_mean', 'mslp_daily_std', 'mslp_daily_mean_max', 'mslp_daily_std_max', 'mslp_daily_mean_min', 'mslp_daily_std_min', 'Lag_1h_mslp_mean', 'Lag_2h_mslp_mean', 'Lag_5h_mslp_mean', 'Lag_1h_mslp_std', 'Lag_2h_mslp_std' , 'Lag_5h_mslp_std', 'Lag_120h_t2m_mean', 'Lag_120h_mslp_std', 'mslp_mean_PL', 'mslp_std_PL', 'mslp_mean_NL', 'mslp_std_NL', 'mslp_mean_FR', 'mslp_std_FR', 'Lag_120h_mslp_mean_PL', 'Lag_120h_mslp_std_PL', 'Lag_120h_mslp_mean_NL', 'Lag_120h_mslp_std_NL', 'Lag_120h_mslp_mean_FR', 'Lag_120h_mslp_std_FR', 'Lag_24h_mslp_mean_PL', 'Lag_24h_mslp_mean_NL',  'Lag_24h_mslp_mean_FR']]
+X = mastertableDFclassifier[['mslp_mean','mslp_std', 't2m_mean', 'Ind_Jan', 'Ind_Feb', 'Ind_Mar', 'Ind_Apr', 'Ind_May', 'Ind_Jun', 'Ind_Jul', 'Ind_Aug', 'Ind_Sep', 'Ind_Oct', 'Ind_Nov', 'Ind_Dec', 'mslp_daily_mean', 'mslp_daily_std', 'mslp_daily_mean_max', 'mslp_daily_std_max', 'mslp_daily_mean_min', 'mslp_daily_std_min', 'Lag_1h_mslp_mean', 'Lag_2h_mslp_mean', 'Lag_5h_mslp_mean', 'Lag_1h_mslp_std', 'Lag_2h_mslp_std' , 'Lag_5h_mslp_std', 'Lag_120h_t2m_mean', 'Lag_120h_mslp_std', 'mslp_mean_PL', 'mslp_std_PL', 'mslp_mean_NL', 'mslp_std_NL', 'mslp_mean_FR', 'mslp_std_FR', 'Lag_120h_mslp_mean_PL', 'Lag_120h_mslp_std_PL', 'Lag_120h_mslp_mean_NL', 'Lag_120h_mslp_std_NL', 'Lag_120h_mslp_mean_FR', 'Lag_120h_mslp_std_FR', 'Lag_24h_mslp_mean_PL', 'Lag_24h_mslp_mean_NL',  'Lag_24h_mslp_mean_FR']]
 y = mastertableDFclassifier['DF_Indicator']
 
 # Train test split
@@ -248,7 +250,7 @@ precision_logreg_rfc = precision_score(y_test, clf_res_y_rfc.values)
 recall_logreg_rfc = recall_score(y_test, clf_res_y_rfc.values)
 
 
-clf = LogisticRegression(random_state=0, max_iter=400).fit(X_train, y_train)
+clf = LogisticRegression(random_state=0, max_iter=600).fit(X_train, y_train)
 pred_cfl = clf.predict_proba(X_test)
 clf_pred_m = pd.DataFrame(pred_cfl)
 clf_pred_m['real'] = y_test.values
@@ -266,6 +268,11 @@ res_eval_df_probs = pd.DataFrame(mastertableDFclassifier[mastertableDFclassifier
 res_eval_df_probs['DF_ind'] = y_test
 res_eval_df_probs['DF_pred'] = pred_cfl[:,1]
 
+res_eval_df_probs_rfc = pd.DataFrame(mastertableDFclassifier[mastertableDFclassifier.index.isin(X_test.index)].Date, columns = ['Date'])
+res_eval_df_probs_rfc['DF_ind'] = y_test
+res_eval_df_probs_rfc['DF_pred'] = pred_rfc[:,1]
+
+
 # fig, axs = plt.subplots(len(res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].Date.apply(lambda x: x.year).unique()))
 # i = 0
 # for year_i in res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].Date.apply(lambda x: x.year).unique():
@@ -281,6 +288,71 @@ res_eval_df_probs['DF_pred'] = pred_cfl[:,1]
 from matplotlib.pyplot import figure
 import matplotlib
 
+
+installed_capacity_factor_solar_pv_power = pd.read_csv('installed_capacity_factor_solar_pv_power_h2.csv',
+                                                       error_bad_lines=False, sep=';', encoding='latin1',
+                                                       index_col=False, low_memory=False)
+installed_capacity_factor_wind_power_ons = pd.read_csv('installed_capacity_factor_wind_power_ons.csv',
+                                                       error_bad_lines=False, sep=';', encoding='latin1',
+                                                       index_col=False, low_memory=False)
+
+installed_capacity_factor_solar_pv_power['Date'] = installed_capacity_factor_solar_pv_power['Date'].apply(
+    lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
+installed_capacity_factor_wind_power_ons['Date'] = installed_capacity_factor_wind_power_ons['Date'].apply(
+    lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
+
+installed_capacity_factor_solar_pv_power = installed_capacity_factor_solar_pv_power.fillna(0)
+installed_capacity_factor_solar_pv_power = installed_capacity_factor_solar_pv_power.round(3)
+installed_capacity_factor_wind_power_ons = installed_capacity_factor_wind_power_ons.round(3)
+
+installed_capacity_factor_solar_pv_power = installed_capacity_factor_solar_pv_power[installed_capacity_factor_solar_pv_power['Date'].dt.year.isin(range(2007, 2022))].reset_index().drop(columns = 'index')
+installed_capacity_factor_solar_pv_power = installed_capacity_factor_solar_pv_power[['Date', 'DE']]
+
+installed_capacity_factor_wind_power_ons = installed_capacity_factor_wind_power_ons[installed_capacity_factor_wind_power_ons['Date'].dt.year.isin(range(2007, 2022))].reset_index().drop(columns = 'index')
+installed_capacity_factor_wind_power_ons = installed_capacity_factor_wind_power_ons[['Date', 'DE']]
+
+installed_capacity_factor_wind_power_ons_plus_solar = pd.DataFrame(installed_capacity_factor_wind_power_ons['Date'],  columns= ['Date'])
+installed_capacity_factor_wind_power_ons_plus_solar = installed_capacity_factor_wind_power_ons_plus_solar.merge(installed_capacity_factor_solar_pv_power, on = 'Date', how = 'left')
+installed_capacity_factor_wind_power_ons_plus_solar = installed_capacity_factor_wind_power_ons_plus_solar.rename({'DE': 'solar_DE'}, axis = 'columns')
+installed_capacity_factor_wind_power_ons_plus_solar = installed_capacity_factor_wind_power_ons_plus_solar.merge(installed_capacity_factor_wind_power_ons, on = 'Date', how = 'left')
+installed_capacity_factor_wind_power_ons_plus_solar = installed_capacity_factor_wind_power_ons_plus_solar.rename({'DE': 'wind_ons_DE'}, axis = 'columns')
+installed_capacity_factor_wind_power_ons_plus_solar['sum'] = installed_capacity_factor_wind_power_ons_plus_solar['solar_DE'] + installed_capacity_factor_wind_power_ons_plus_solar['wind_ons_DE']
+
+i = 0
+for year_i in res_eval_df_probs_rfc[res_eval_df_probs_rfc['DF_ind'] == 1].Date.apply(lambda x: x.year).unique():
+    fig, ax = plt.subplots(4, figsize=(23, 7), dpi=90)
+    data_wind_year_i = installed_capacity_factor_wind_power_ons[
+        installed_capacity_factor_wind_power_ons['Date'].apply(lambda x: x.year).isin([year_i])]
+    data_solar_year_i = installed_capacity_factor_solar_pv_power[
+        installed_capacity_factor_solar_pv_power['Date'].apply(lambda x: x.year).isin([year_i])]
+    data_sum_year_i = installed_capacity_factor_wind_power_ons_plus_solar[
+        installed_capacity_factor_wind_power_ons_plus_solar['Date'].apply(lambda x: x.year).isin([year_i])]
+    data_year_i = res_eval_df_probs_rfc[res_eval_df_probs_rfc['Date'].apply(lambda x: x.year).isin([year_i])]
+    data_year_i_df = res_eval_df_probs_rfc[
+        (res_eval_df_probs_rfc['DF_ind'] == 1) & (res_eval_df_probs_rfc['Date'].apply(lambda x: x.year).isin([year_i]))]
+    # data_year_i_df = res_eval_df_probs_rfc[(res_eval_df_probs_rfc['DF_ind'] == 1) & (res_eval_df_probs_rfc['Date'].apply(lambda x: x.year).isin([year_i]))]
+    ax[0].plot(data_wind_year_i['Date'], data_wind_year_i['DE'], color='navy', label='Onshore wind adjusted CF')
+    ax[1].plot(data_solar_year_i['Date'], data_solar_year_i['DE'], color='indigo', label='Solar adjusted CF')
+    ax[2].plot(data_sum_year_i['Date'], data_sum_year_i['sum'], color='violet',
+               label='Sum (Onshore wind + solar) adjusted CFs')
+    ax[3].plot(data_year_i['Date'], data_year_i['DF_pred'], color='teal', label='Onshore wind adjusted CF')
+    ax[3].scatter(data_year_i_df['Date'], data_year_i_df['DF_pred'], s=7, color='crimson', label='Dunkelflaute', zorder=1)
+    # ax = plt.scatter(data_year_i_df['Date'], data_year_i_df['DF_pred'])
+    ax[0].hlines(0.5, data_solar_year_i['Date'].iloc[0], data_solar_year_i['Date'].iloc[-1], 'green')
+    ax[1].hlines(0.5, data_solar_year_i['Date'].iloc[0], data_solar_year_i['Date'].iloc[-1], 'green')
+    ax[2].hlines(1, data_solar_year_i['Date'].iloc[0], data_solar_year_i['Date'].iloc[-1], 'green')
+    matplotlib.rc('xtick', labelsize=13)
+    matplotlib.rc('ytick', labelsize=13)
+    fig.legend()
+    plt.savefig(
+        'ClassificationResults_Probabilities_all_rfc_incl_CFs' + str(year_i) + '.png')
+    # ax.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d'))
+    # plt.plot(res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].Date, res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].DF_pred)
+    i = i + 1
+    plt.show()
+
+#----
+
 i = 0
 for year_i in res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].Date.apply(lambda x: x.year).unique():
     figure(figsize=(30, 6), dpi=80)
@@ -289,8 +361,8 @@ for year_i in res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].Date.apply(lam
     ax = plt.scatter(data_year_i['Date'], data_year_i['DF_pred'])
     matplotlib.rc('xtick', labelsize=13)
     matplotlib.rc('ytick', labelsize=13)
-    plt.savefig(
-        'ClassificationResults_Probabilities_' + str(year_i) + '.png')
+    #plt.savefig(
+    #    'ClassificationResults_Probabilities_' + str(year_i) + '.png')
     #ax.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d'))
     #plt.plot(res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].Date, res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].DF_pred)
     i = i + 1
@@ -305,16 +377,12 @@ for year_i in res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].Date.apply(lam
     ax = plt.scatter(data_year_i_df['Date'], data_year_i_df['DF_pred'])
     matplotlib.rc('xtick', labelsize=13)
     matplotlib.rc('ytick', labelsize=13)
-    plt.savefig(
-        'ClassificationResults_Probabilities_all_' + str(year_i) + '.png')
+    #plt.savefig(
+    #    'ClassificationResults_Probabilities_all_' + str(year_i) + '.png')
     #ax.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d'))
     #plt.plot(res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].Date, res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].DF_pred)
     i = i + 1
     plt.show()
-
-res_eval_df_probs_rfc = pd.DataFrame(mastertableDFclassifier[mastertableDFclassifier.index.isin(X_test.index)].Date, columns = ['Date'])
-res_eval_df_probs_rfc['DF_ind'] = y_test
-res_eval_df_probs_rfc['DF_pred'] = pred_rfc[:,1]
 
 i = 0
 for year_i in res_eval_df_probs_rfc[res_eval_df_probs_rfc['DF_ind'] == 1].Date.apply(lambda x: x.year).unique():
@@ -324,8 +392,8 @@ for year_i in res_eval_df_probs_rfc[res_eval_df_probs_rfc['DF_ind'] == 1].Date.a
     ax = plt.scatter(data_year_i['Date'], data_year_i['DF_pred'])
     matplotlib.rc('xtick', labelsize=13)
     matplotlib.rc('ytick', labelsize=13)
-    plt.savefig(
-        'ClassificationResults_Probabilities_rfc_' + str(year_i) + '.png')
+    #plt.savefig(
+    #    'ClassificationResults_Probabilities_rfc_' + str(year_i) + '.png')
     #ax.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d'))
     #plt.plot(res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].Date, res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].DF_pred)
     i = i + 1
@@ -341,12 +409,14 @@ for year_i in res_eval_df_probs_rfc[res_eval_df_probs_rfc['DF_ind'] == 1].Date.a
     ax = plt.hlines(0.01, data_year_i['Date'].iloc[0], data_year_i['Date'].iloc[-1], 'green')
     matplotlib.rc('xtick', labelsize=13)
     matplotlib.rc('ytick', labelsize=13)
-    plt.savefig(
-        'ClassificationResults_Probabilities_all_rfc_' + str(year_i) + '.png')
+    #plt.savefig(
+    #    'ClassificationResults_Probabilities_all_rfc_' + str(year_i) + '.png')
     #ax.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d'))
     #plt.plot(res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].Date, res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].DF_pred)
     i = i + 1
     plt.show()
+
+
 
 
 #----
