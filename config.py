@@ -32,11 +32,13 @@ Preprocessor_comparison_dates = False
 # If true, the Dunkelflaute Describer is executed
 Describer = True
 # If true, the individual components of the Dunkelflaute Describer is executed
-
 DescriberMSLDataCalculator = False
 DescriberMSLDataCalculatorRef = False
 DescriberHeatmapDFPlotter = True
 DescriberHeatmapRefDateDFPlotter = True
+
+extract_data_DE_FR_PL_NL = False
+extract_data_GWL = True
 
 FeatureCreatorLocationAdder = False
 
