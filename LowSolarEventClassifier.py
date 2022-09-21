@@ -105,7 +105,7 @@ mastertableDFclassifier = mastertableDFclassifier.rename(columns = {'DE': 'AdjCF
 mastertableDFclassifier = mastertableDFclassifier.merge(installed_capacity_factor_solar_pv_power, on = 'Date', how = 'left')
 mastertableDFclassifier = mastertableDFclassifier.rename(columns = {'DE': 'AdjCF_Solar'})
 
-mastertableDFclassifier['DF_Indicator_1'] = DF_indices_0_1_encoding
+mastertableDFclassifier['DF_Indicator'] = DF_indices_0_1_encoding
 
 mastertableDFclassifier['Flaute_Indicator'] = (mastertableDFclassifier['AdjCF_OnsWind'] <= 0.25)
 mastertableDFclassifier['Dunkel_Indicator'] = (mastertableDFclassifier['AdjCF_Solar'] <= 0.25)
@@ -166,7 +166,7 @@ mastertableDFclassifier['Lag_120h_t2m_std'] = mastertableDFclassifier['t2m_std']
 for col in msl_aggr_GWL_79to21.columns[1:-1]:
     mastertableDFclassifier[str(col) + '_Lag_24h'] = mastertableDFclassifier[str(col)].shift(24)
     mastertableDFclassifier[str(col) + '_Lag_120h'] = mastertableDFclassifier[str(col)].shift(120)
-
+    mastertableDFclassifier[str(col) + '_diff120now'] = mastertableDFclassifier[str(col)] - mastertableDFclassifier[str(col) + '_Lag_120h']
 
 #mastertableDFclassifier = mastertableDFclassifier[mastertableDFclassifier['Date'].apply(lambda x: x.hour) == 11]
 # Test
@@ -174,8 +174,8 @@ for col in msl_aggr_GWL_79to21.columns[1:-1]:
 # mastertableDFclassifier = mastertableDFclassifier.reset_index()
 # mastertableDFclassifier = mastertableDFclassifier.dropna()
 # mastertableDFclassifier = mastertableDFclassifier.reset_index().drop(columns = 'index')
-mastertableDFclassifier['DF_Indicator'] = 0
-mastertableDFclassifier['DF_Indicator'][mastertableDFclassifier['DF_Indicator_h'] >= 0.5] = 1
+#mastertableDFclassifier['DF_Indicator'] = 0
+#mastertableDFclassifier['DF_Indicator'][mastertableDFclassifier['DF_Indicator_h'] >= 0.5] = 1
 
 mastertableDFclassifier = mastertableDFclassifier[(
                             mastertableDFclassifier['Date'].apply(lambda x: x.hour).isin(
@@ -205,9 +205,14 @@ mastertableDFclassifier = mastertableDFclassifier.reset_index().drop(columns = '
 #                              , 'mean_Greenland_Lag_24h' , 'mean_British_Isles_Lag_24h',  'mean_Mediterranean_Sea_Lag_24h', 'mean_Sea_west_Iberian_Peninsula_Lag_24h','mean_Norwegian_Sea_Lag_24h' , 'mean_North_Sea_Lag_24h', 'mean_Western_Russia_Lag_24h',  'mean_Sweden_Lag_24h'
 #                             , 'mean_Greenland_Lag_120h', 'mean_British_Isles_Lag_120h', 'mean_Mediterranean_Sea_Lag_120h', 'mean_Sea_west_Iberian_Peninsula_Lag_120h', 'mean_Norwegian_Sea_Lag_120h', 'mean_North_Sea_Lag_120h', 'mean_Western_Russia_Lag_120h', 'mean_Sweden_Lag_120h']]
 
+# X = mastertableDFclassifier[['mslp_mean','mslp_std', 't2m_mean', 'Ind_Jan', 'Ind_Feb', 'Ind_Mar', 'Ind_Apr', 'Ind_May', 'Ind_Jun', 'Ind_Jul', 'Ind_Aug', 'Ind_Sep', 'Ind_Oct', 'Ind_Nov', 'Ind_Dec', 'mslp_daily_mean', 'mslp_daily_std', 'mslp_daily_mean_max', 'mslp_daily_std_max', 'mslp_daily_mean_min', 'mslp_daily_std_min', 'Lag_1h_mslp_mean', 'Lag_2h_mslp_mean', 'Lag_5h_mslp_mean', 'Lag_1h_mslp_std', 'Lag_2h_mslp_std' , 'Lag_5h_mslp_std', 'Lag_120h_t2m_mean', 'Lag_120h_mslp_std', 'mslp_mean_PL', 'mslp_std_PL', 'mslp_mean_NL', 'mslp_std_NL', 'mslp_mean_FR', 'mslp_std_FR', 'Lag_120h_mslp_mean_PL', 'Lag_120h_mslp_std_PL', 'Lag_120h_mslp_mean_NL', 'Lag_120h_mslp_std_NL', 'Lag_120h_mslp_mean_FR', 'Lag_120h_mslp_std_FR', 'Lag_24h_mslp_mean_PL', 'Lag_24h_mslp_mean_NL',  'Lag_24h_mslp_mean_FR'
+#                              , 'mean_Greenland' , 'mean_British_Isles',  'mean_Mediterranean_Sea', 'mean_Sea_west_Iberian_Peninsula','mean_Norwegian_Sea' , 'mean_North_Sea', 'mean_Western_Russia',  'mean_Sweden'
+#                             , 'mean_Greenland_Lag_24h' , 'mean_British_Isles_Lag_24h',  'mean_Mediterranean_Sea_Lag_24h', 'mean_Sea_west_Iberian_Peninsula_Lag_24h','mean_Norwegian_Sea_Lag_24h' , 'mean_North_Sea_Lag_24h', 'mean_Western_Russia_Lag_24h',  'mean_Sweden_Lag_24h']]
+
 X = mastertableDFclassifier[['mslp_mean','mslp_std', 't2m_mean', 'Ind_Jan', 'Ind_Feb', 'Ind_Mar', 'Ind_Apr', 'Ind_May', 'Ind_Jun', 'Ind_Jul', 'Ind_Aug', 'Ind_Sep', 'Ind_Oct', 'Ind_Nov', 'Ind_Dec', 'mslp_daily_mean', 'mslp_daily_std', 'mslp_daily_mean_max', 'mslp_daily_std_max', 'mslp_daily_mean_min', 'mslp_daily_std_min', 'Lag_1h_mslp_mean', 'Lag_2h_mslp_mean', 'Lag_5h_mslp_mean', 'Lag_1h_mslp_std', 'Lag_2h_mslp_std' , 'Lag_5h_mslp_std', 'Lag_120h_t2m_mean', 'Lag_120h_mslp_std', 'mslp_mean_PL', 'mslp_std_PL', 'mslp_mean_NL', 'mslp_std_NL', 'mslp_mean_FR', 'mslp_std_FR', 'Lag_120h_mslp_mean_PL', 'Lag_120h_mslp_std_PL', 'Lag_120h_mslp_mean_NL', 'Lag_120h_mslp_std_NL', 'Lag_120h_mslp_mean_FR', 'Lag_120h_mslp_std_FR', 'Lag_24h_mslp_mean_PL', 'Lag_24h_mslp_mean_NL',  'Lag_24h_mslp_mean_FR'
                              , 'mean_Greenland' , 'mean_British_Isles',  'mean_Mediterranean_Sea', 'mean_Sea_west_Iberian_Peninsula','mean_Norwegian_Sea' , 'mean_North_Sea', 'mean_Western_Russia',  'mean_Sweden'
-                            , 'mean_Greenland_Lag_24h' , 'mean_British_Isles_Lag_24h',  'mean_Mediterranean_Sea_Lag_24h', 'mean_Sea_west_Iberian_Peninsula_Lag_24h','mean_Norwegian_Sea_Lag_24h' , 'mean_North_Sea_Lag_24h', 'mean_Western_Russia_Lag_24h',  'mean_Sweden_Lag_24h']]
+                            , 'mean_Greenland_Lag_24h' , 'mean_British_Isles_Lag_24h',  'mean_Mediterranean_Sea_Lag_24h', 'mean_Sea_west_Iberian_Peninsula_Lag_24h','mean_Norwegian_Sea_Lag_24h' , 'mean_North_Sea_Lag_24h', 'mean_Western_Russia_Lag_24h',  'mean_Sweden_Lag_24h'
+                             , 'mean_Greenland_diff120now' , 'mean_British_Isles_diff120now',  'mean_Mediterranean_Sea_diff120now', 'mean_Sea_west_Iberian_Peninsula_diff120now','mean_Norwegian_Sea_diff120now' , 'mean_North_Sea_diff120now', 'mean_Western_Russia_diff120now',  'mean_Sweden_diff120now']]
 
 y = mastertableDFclassifier['Dunkel_Indicator']
 
@@ -343,7 +348,7 @@ res_eval_df_probs['DF_pred'] = pred_cfl[:,1]
 res_eval_df_probs_rfc = pd.DataFrame(mastertableDFclassifier[mastertableDFclassifier.index.isin(X_test.index)].Date, columns = ['Date'])
 res_eval_df_probs_rfc['DF_ind'] = y_test
 res_eval_df_probs_rfc['DF_pred'] = pred_rfc[:,1]
-
+res_eval_df_probs_rfc = res_eval_df_probs_rfc.merge(mastertableDFclassifier[['DF_Indicator', 'Date']], on = 'Date', how = 'left')
 
 # fig, axs = plt.subplots(len(res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].Date.apply(lambda x: x.year).unique()))
 # i = 0
@@ -373,6 +378,7 @@ installed_capacity_factor_wind_power_ons_plus_solar = installed_capacity_factor_
 installed_capacity_factor_wind_power_ons_plus_solar = installed_capacity_factor_wind_power_ons_plus_solar.rename({'DE': 'wind_ons_DE'}, axis = 'columns')
 installed_capacity_factor_wind_power_ons_plus_solar['sum'] = installed_capacity_factor_wind_power_ons_plus_solar['solar_DE'] + installed_capacity_factor_wind_power_ons_plus_solar['wind_ons_DE']
 
+#installed_capacity_factor_wind_power_ons_plus_solar = installed_capacity_factor_wind_power_ons_plus_solar.merge(mastertableDFclassifier[['DF_Indicator', 'Date']], on = 'Date', how = 'left')
 
 i = 0
 j = 0
@@ -383,12 +389,15 @@ for year_i in res_eval_df_probs_rfc[res_eval_df_probs_rfc['DF_ind'] == 1].Date.a
         installed_capacity_factor_wind_power_ons_plus_solar['Date'].apply(lambda x: x.year).isin([year_i])]
     data_year_i = res_eval_df_probs_rfc[res_eval_df_probs_rfc['Date'].apply(lambda x: x.year).isin([year_i])]
     data_year_i_df = res_eval_df_probs_rfc[
-        (res_eval_df_probs_rfc['DF_ind'] == 1) & (res_eval_df_probs_rfc['Date'].apply(lambda x: x.year).isin([year_i]))]
+        (res_eval_df_probs_rfc['DF_Indicator'] == 1) & (res_eval_df_probs_rfc['Date'].apply(lambda x: x.year).isin([year_i]))]
+    data_year_i_df = data_year_i_df.merge(data_sum_year_i, how = 'left', on = 'Date')
     data_all = data_sum_year_i.merge(data_year_i, how = 'left', on = 'Date')
     #ax[j, k].scatter(data_year_i['DF_pred'],
     #            data_sum_year_i['sum'])
     ax[j, k].scatter(data_all['DF_pred'],
                 data_all['solar_DE'], s=3, color='indigo', label=str(year_i))
+    ax[j, k].scatter(data_year_i_df['DF_pred'],
+                data_year_i_df['solar_DE'], s=3, color='orange', label= 'DF in ' + str(year_i))
     ax[j, k].hlines(y = 0.25,xmin=0, xmax=1, colors = 'crimson')
     ax[j, k].set_xlim(left=0, right=1)
     ax[j, k].set_ylim(bottom=0, top=4.5)
@@ -405,13 +414,11 @@ for year_i in res_eval_df_probs_rfc[res_eval_df_probs_rfc['DF_ind'] == 1].Date.a
     if i >= 6:
         j = 1
     i = i + 1
-
 fig.supxlabel('Probability (for solar CF <= 0.25) Classifier')
 fig.supylabel('Seasonal adjusted and corrected solar capacity factor')
 plt.savefig(
     'ClassificationResults_Probabilities_solar_Scatterplot_per_year.png')
 plt.show()
-
 
 i = 0
 for year_i in res_eval_df_probs_rfc[res_eval_df_probs_rfc['DF_ind'] == 1].Date.apply(lambda x: x.year).unique():
