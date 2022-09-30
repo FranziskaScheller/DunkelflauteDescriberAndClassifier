@@ -6,13 +6,13 @@
 Select the modules that you want to execute in this run 
 """
 # If true, the ETL is executed
-ETL = False
+ETL = True
 # If true, the individual components of the ETL is executed
 ETL_energy_vars_API = False
 ETL_energy_vars_Load = False
 ETL_meteo_vars = False
-ETL_meteo_vars_API = True
-ETL_meteo_vars_Write = False
+ETL_meteo_vars_API = False
+ETL_meteo_vars_Write = True
 ETL_meteo_vars_Reader = False
 ETL_RegressionCorrection = False
 ETL_RegressionCorrection_DE = True

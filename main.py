@@ -84,6 +84,7 @@ print(1)
 
 if config.ETL:
 
+    print(1)
     if config.ETL_energy_vars_API:
 
         ETL.EnergyVarsLoaderAPI()
@@ -103,7 +104,7 @@ if config.ETL:
         print(1)
     if config.ETL_meteo_vars_Write:
 
-        data_ssrd_1979, dates_ssrd_1979 = ETL.MeterologyVarsLoaderGHI(['1979'])
+        #data_ssrd_1979, dates_ssrd_1979 = ETL.MeterologyVarsLoaderGHI(['1979'])
 
         data_msl_1979, dates_msl_1979 = ETL.MeterologyVarsLoader(['1979'], ['MSL_0000m', 'msl'])
         data_ta_1979, dates_ta_1979 = ETL.MeterologyVarsLoader(['1979'], ['TA-_0002m', 't2m'])

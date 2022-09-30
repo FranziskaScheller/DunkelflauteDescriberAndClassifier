@@ -10,7 +10,7 @@ def HistPlotterOneVar(data, country, variable, threshold):
     sns.axes_style("whitegrid")
     #sns.set_theme(style="whitegrid")
     fig, ax = plt.subplots(figsize=(12, 8), dpi=180)
-    ax = sns.barplot(x = 'LengthsDF', y = 'Total_Count', data = dunkelflaute_freq_country_i, color = 'indigo')
+    ax = sns.barplot(x = 'LengthsDF', y = 'Total_Count', data = dunkelflaute_freq_country_i, color = 'teal')
     #ax.get_xticklabels()[1::10]
     #for label in ax.xaxis.get_ticklabels()[::10]:
     #    label.set_visible(False)
@@ -20,13 +20,15 @@ def HistPlotterOneVar(data, country, variable, threshold):
     #[l.set_visible(False) for (i, l) in enumerate(ax.yaxis.get_ticklabels()) if i % n != 0]
     #plt.bar(dunkelflaute_freq_country_i[dunkelflaute_freq_country_i.columns[0]],
     #        dunkelflaute_freq_country_i[dunkelflaute_freq_country_i.columns[1]])
-    ax.set_ylabel('Frequency of Dunkelflaute events that last exactly x hours in a row', fontsize=13)
-    ax.set_xlabel('Length of Dunkelflaute in hours', fontsize=13)
+    ax.set_ylabel('Number of Dunkelflaute Events', fontsize=13)
+    ax.set_xlabel('Dunkelflaute Event Duration in Hours', fontsize=13)
     #plt.title('Frequency of dunkelflaute events in ' + country + ' where ' + variable +' falls below threshold ' + threshold + ' x hours in a row',
     #          fontsize=15)
-    plt.title('Frequency of Dunkelflaute events in ' + country + ' where PV and onshore wind fall below a threshold of ' + threshold + ' x hours in a row',
-              fontsize=14)
+    #plt.title('Frequency of Dunkelflaute events in ' + country + ' where PV and onshore wind fall below a threshold of ' + threshold + ' x hours in a row',
+    #          fontsize=14)
+    ax.set_axisbelow(True)
     ax.grid(axis='y')
+    #ax.set_ylim(bottom=0, top=14)
     ax.set_facecolor('#d8dcd6')
     plt.savefig(
         'DF_Events_Plots/HistogramOfDunkelflauteEventsFor' + country + '_' + variable + '_threshold_' + threshold + str(len(dunkelflaute_freq_country_i)) + 'PVOnSh.png')
@@ -110,17 +112,38 @@ def DFHoursPerYear(df_HoursPerYearCountryi1, df_HoursPerYearCountryi2, df_HoursP
     df_HoursPerYear = df_HoursPerYear.merge(df_HoursPerYearCountryi3, on = 'Thresholds')
     return df_HoursPerYear
 
-#df_FR_05 = pd.read_csv('CFR_frequencys/CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_FR_0.5_0.5__PVOnshoreWind_AC.csv', error_bad_lines=False, sep=';', encoding = 'latin1', index_col= False, low_memory=False)
+df_DE_05 = pd.read_csv('CFR_frequencys/CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_DE_0.5_0.5__PVOnshoreWind_AC.csv', error_bad_lines=False, sep=';', encoding = 'latin1', index_col= False, low_memory=False)
+df_DE_05['product'] = df_DE_05['LengthsDF'] * df_DE_05['Total_Count']
+df_DE_05_sum = df_DE_05['product'].sum()
+df_DE_05_avg_sum_per_year = np.round(df_DE_05_sum/42, 3)
+df_DE_05_nbr = df_DE_05['Total_Count'].sum()
+df_DE_05_avg_nbr = np.round(df_DE_05['Total_Count'].sum()/42, 3)
+#HistPlotterOneVar(df_DE_05, 'Germany', 'Dunkelflaute Events', '0.5')
+#
+
+df_FR_05 = pd.read_csv('CFR_frequencys/CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_FR_0.5_0.5__PVOnshoreWind_AC.csv', error_bad_lines=False, sep=';', encoding = 'latin1', index_col= False, low_memory=False)
+df_FR_05['product'] = df_FR_05['LengthsDF'] * df_FR_05['Total_Count']
+df_FR_05_sum = df_FR_05['product'].sum()
+df_FR_05_avg_sum_per_year = np.round(df_FR_05_sum/42, 3)
+df_FR_05_nbr = df_FR_05['Total_Count'].sum()
+df_FR_05_avg_nbr = np.round(df_FR_05['Total_Count'].sum()/42, 3)
 #HistPlotterOneVar(df_FR_05, 'France', 'Dunkelflaute Events', '0.5')
 #
-# df_DE_05 = pd.read_csv('CFR_frequencys/CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_DE_0.5_0.5__PVOnshoreWind_AC.csv', error_bad_lines=False, sep=';', encoding = 'latin1', index_col= False, low_memory=False)
-# HistPlotterOneVar(df_DE_05, 'Germany', 'Dunkelflaute Events', '0.5')
-#
 df_NL_05 = pd.read_csv('CFR_frequencys/CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_NL_0.5_0.5__PVOnshoreWind_AC.csv', error_bad_lines=False, sep=';', encoding = 'latin1', index_col= False, low_memory=False)
-HistPlotterOneVar(df_NL_05, 'Netherlands', 'Dunkelflaute Events', '0.5')
+df_NL_05['product'] = df_NL_05['LengthsDF'] * df_NL_05['Total_Count']
+df_NL_05_sum = df_NL_05['product'].sum()
+df_NL_05_avg_sum_per_year = np.round(df_NL_05_sum/42, 3)
+df_NL_05_nbr = df_NL_05['Total_Count'].sum()
+df_NL_05_avg_nbr = np.round(df_NL_05['Total_Count'].sum()/42, 3)
+#HistPlotterOneVar(df_NL_05, 'Netherlands', 'Dunkelflaute Events', '0.5')
 #
 df_PL_05 = pd.read_csv('CFR_frequencys/CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_PL_0.5_0.5__PVOnshoreWind_AC.csv', error_bad_lines=False, sep=';', encoding = 'latin1', index_col= False, low_memory=False)
-HistPlotterOneVar(df_PL_05, 'Poland', 'Dunkelflaute Events', '0.5')
+df_PL_05['product'] = df_PL_05['LengthsDF'] * df_PL_05['Total_Count']
+df_PL_05_sum = df_PL_05['product'].sum()
+df_PL_05_avg_sum_per_year = np.round(df_PL_05_sum/42, 3)
+df_PL_05_nbr = df_PL_05['Total_Count'].sum()
+df_PL_05_avg_nbr = np.round(df_PL_05['Total_Count'].sum()/42, 3)
+#HistPlotterOneVar(df_PL_05, 'Poland', 'Dunkelflaute Events', '0.5')
 
 
 
