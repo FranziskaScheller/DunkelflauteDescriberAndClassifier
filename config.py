@@ -41,7 +41,7 @@ extract_data_DE_FR_PL_NL = False
 extract_data_GWL = True
 
 FeatureCreatorLocationAdder = False
-
+prepfile = True
 """
 Specify file locations and file names (which should normally not change)
 """

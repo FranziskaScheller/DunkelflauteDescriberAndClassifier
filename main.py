@@ -33,6 +33,44 @@ location = geolocator.reverse(Latitude + "," + Longitude)
 
 address = location.raw['address']
 
+if config.prepfile:
+    DF_Data_all_mean_msl_DE = pd.read_csv(
+        'DF_Data_all_mean_mslDE.csv', header=None, index_col=None, sep=';')
+    DF_Data_all_mean_msl_DE = DF_Data_all_mean_msl_DE / 100
+    DF_Data_all_mean_t2m_DE = pd.read_csv(
+        'DF_Data_all_mean_t2mDE.csv', header=None, index_col=None, sep=';')
+    DF_Data_all_mean_t2m_DE = DF_Data_all_mean_t2m_DE - 273.15
+    DF_Data_all_mean_ssrdDE = pd.read_csv(
+        'DF_Data_all_mean_ssrdDE.csv', header=None, index_col=None, sep=';')
+    DF_Data_all_mean_var_100_metre_wind_speedDE = pd.read_csv(
+        'DF_Data_all_mean_var_100_metre_wind_speedDE.csv', header=None,
+        index_col=None, sep=';')
+    DF_Data_all_mean_ws10DE = pd.read_csv(
+        'DF_Data_all_mean_ws10DE.csv', header=None, index_col=None, sep=';')
+
+    fn = '/Volumes/PortableSSD/download19790102/H_ERA5_ECMW_T639_GHI_0000m_Euro_025d_S197901010000_E197901312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
+    ds = nc.Dataset(fn)
+    #
+    time = ds['time'][:]
+    longitude = ds['longitude'][:]
+    latitude = ds['latitude'][:]
+
+    location_df = pd.DataFrame(np.repeat(latitude, len(longitude)), columns= ['latitude'])
+    longitudes = np.repeat(longitude, len(latitude))
+    longitudes_resh = longitudes.reshape(len(longitude), len(latitude)).T.reshape(len(longitude)* len(latitude),)
+    location_df['longitude'] = longitudes_resh
+    location_df['msl_DE'] = DF_Data_all_mean_msl_DE.values.reshape((len(location_df),1))
+    location_df['t2m_DE'] = DF_Data_all_mean_t2m_DE.values.reshape((len(location_df),1))
+    location_df['ssrdDE'] = DF_Data_all_mean_ssrdDE.values.reshape((len(location_df),1))
+    location_df['var_100_metre_wind_speedDE'] = DF_Data_all_mean_var_100_metre_wind_speedDE.values.reshape((len(location_df),1))
+    location_df['DF_Data_all_mean_ws10DE'] = DF_Data_all_mean_ws10DE.values.reshape((len(location_df),1))
+
+    location_df.to_csv(
+        'MeanClimatologicalData_DF_DE_reshaped.csv', sep=';', encoding='latin1', index=False)
+
+    print(1)
+
+
 # traverse the data
 city = address.get('city', '')
 state = address.get('state', '')
