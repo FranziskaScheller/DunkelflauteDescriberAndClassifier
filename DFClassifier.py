@@ -10,8 +10,15 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
+from sklearn.ensemble import BaggingClassifier
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import OneHotEncoder
+from imblearn.ensemble import BalancedRandomForestClassifier
+from imblearn.metrics import classification_report_imbalanced
+from sklearn.model_selection import cross_validate
+from sklearn.dummy import DummyClassifier
+from sklearn.metrics import roc_auc_score
 
 ### Create MasterTable ###
 msl_aggr_DE_79to21 = pd.read_csv(config.file_path_ext_ssd + 'features_mean_std_mslDeutschland.csv', sep=';')
@@ -280,6 +287,104 @@ clf_res_y_rfc = pd.DataFrame(clf_res_y_rfc)
 conf_mat_logreg_rfc = confusion_matrix(y_test, clf_res_y_rfc.values)
 precision_logreg_rfc = precision_score(y_test, clf_res_y_rfc.values)
 recall_logreg_rfc = recall_score(y_test, clf_res_y_rfc.values)
+
+#brf = BalancedRandomForestClassifier(n_estimators=50, random_state=0)
+brf = BalancedRandomForestClassifier(n_estimators=200, random_state=0).fit(X_train, y_train)
+pred_brf = brf.predict_proba(X_test)
+brf.feature_importances_
+#
+clf_pred_m_brf = pd.DataFrame(pred_brf)
+clf_pred_m_brf['real'] = y_test.values
+#
+clf_res_y_brf = np.zeros(len(y_test))
+clf_res_y_brf[pred_brf[:,1] >= 0.006] = 1
+clf_res_y_brf = pd.DataFrame(clf_res_y_brf)
+#
+conf_mat_logreg_brf = confusion_matrix(y_test, clf_res_y_brf.values)
+precision_logreg_brf = precision_score(y_test, clf_res_y_brf.values)
+recall_logreg_brf = recall_score(y_test, clf_res_y_brf.values)
+target_names = ['NoDF', 'DF']  # doctest : +NORMALIZE_WHITESPACE
+res_brt = classification_report_imbalanced(y_test.values, clf_res_y_brf.values, target_names=target_names)
+res_rf = classification_report_imbalanced(y_test.values, clf_res_y_rfc.values, target_names=target_names)
+
+r_auc_sc = roc_auc_score(y_test, pred_brf[:, 1])
+from numpy import sqrt
+from numpy import argmax
+
+from sklearn.linear_model import LogisticRegression
+from matplotlib import pyplot
+from sklearn.metrics import roc_curve
+# calculate roc curves
+fpr, tpr, thresholds = roc_curve(y_test, pred_brf[:, 1])
+# calculate the g-mean for each threshold
+gmeans = sqrt(tpr * (1-fpr))
+# locate the index of the largest g-mean
+ix = argmax(gmeans)
+print('Best Threshold=%f, G-Mean=%.3f' % (thresholds[ix], gmeans[ix]))
+weighted_acc = 0.8*tpr + 0.2*(1-fpr)
+# locate the index of the largest g-mean
+ix_weighted_acc = argmax(weighted_acc)
+print('Best Threshold=%f, weighted_acc=%.3f' % (thresholds[ix], weighted_acc[ix]))
+# plot the roc curve for the model
+pyplot.plot([0,1], [0,1], linestyle='--', label='No Skill')
+pyplot.plot(fpr, tpr, marker='.', label='Logistic')
+pyplot.scatter(fpr[ix], tpr[ix], marker='o', color='black', label='Best_G-Mean')
+pyplot.scatter(fpr[ix_weighted_acc], tpr[ix_weighted_acc], marker='o', color='red', label='Best_WeightedAcc')
+# axis labels
+pyplot.xlabel('False Positive Rate')
+pyplot.ylabel('True Positive Rate')
+pyplot.legend()
+# show the plot
+pyplot.show()
+
+weighted_acc = 0.8*tpr + 0.2*(1-fpr)
+# locate the index of the largest g-mean
+ix_weighted_acc = argmax(weighted_acc)
+print('Best Threshold=%f, weighted_acc=%.3f' % (thresholds[ix], weighted_acc[ix]))
+# plot the roc curve for the model
+pyplot.plot([0,1], [0,1], linestyle='--', label='No Skill')
+pyplot.plot(fpr, tpr, marker='.', label='Logistic')
+pyplot.scatter(fpr[ix], tpr[ix], marker='o', color='black', label='Best')
+# axis labels
+pyplot.xlabel('False Positive Rate')
+pyplot.ylabel('True Positive Rate')
+pyplot.legend()
+# show the plot
+pyplot.show()
+
+
+# ---- Evaluation ----
+dummy_clf = DummyClassifier(strategy="stratified").fit(X_train, y_train)
+pred_dummy_clf = dummy_clf.predict_proba(X_test)
+
+dummy_clf = DummyClassifier(strategy="stratified")
+scoring = ["accuracy", "balanced_accuracy"]
+cv_result = cross_validate(dummy_clf, df_res, y_test.values, scoring=scoring)
+index = []
+scores = {"Accuracy": [], "Balanced accuracy": []}
+index += ["Dummy classifier"]
+cv_result = cross_validate(dummy_clf, df_res, y_test.values, scoring=scoring)
+scores["Accuracy"].append(cv_result["test_accuracy"].mean())
+scores["Balanced accuracy"].append(cv_result["test_balanced_accuracy"].mean())
+
+df_scores = pd.DataFrame(scores, index=index)
+#df_scores
+
+clf = BaggingClassifier(base_estimator=SVC(),n_estimators=150, random_state=0).fit(X_train, y_train)
+
+#rfc = RandomForestClassifier(random_state=0, min_samples_leaf = 2, n_estimators= 200).fit(X_train, y_train)
+pred_clf = clf.predict_proba(X_test)
+#
+clf_pred_m_clf = pd.DataFrame(pred_clf)
+clf_pred_m_clf['real'] = y_test.values
+#
+clf_res_y_clf = np.zeros(len(y_test))
+clf_res_y_clf[pred_clf[:,1] >= 0.006] = 1
+clf_res_y_clf = pd.DataFrame(clf_res_y_clf)
+#
+conf_mat_logreg_clf = confusion_matrix(y_test, clf_res_y_clf.values)
+precision_logreg_clf = precision_score(y_test, clf_res_y_clf.values)
+recall_logreg_clf = recall_score(y_test, clf_res_y_clf.values)
 
 
 clf = LogisticRegression(random_state=0, max_iter=600).fit(X_train, y_train)

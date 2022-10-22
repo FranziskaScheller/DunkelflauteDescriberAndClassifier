@@ -34,6 +34,16 @@ location = geolocator.reverse(Latitude + "," + Longitude)
 address = location.raw['address']
 
 if config.prepfile:
+
+    data_dir = 'ref-nuts-2021–01m/'
+    path_rg = data_dir + "NUTS_RG_01M_2021_3035_LEVL_0.json"
+    gdf_rg = gpd.read_file(path_rg)
+    path_bn = data_dir + "NUTS_BN_01M_2021_3035_LEVL_0.json"
+    gdf_bn = gpd.read_file(path_bn)
+    path_lb = data_dir + "NUTS_LB_2021_3035_LEVL_0.json"
+    gdf_lb = gpd.read_file(path_lb)
+
+
     DF_Data_all_mean_msl_DE = pd.read_csv(
         'DF_Data_all_mean_mslDE.csv', header=None, index_col=None, sep=';')
     DF_Data_all_mean_msl_DE = DF_Data_all_mean_msl_DE / 100
