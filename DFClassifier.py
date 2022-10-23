@@ -24,7 +24,7 @@ from sklearn.metrics import roc_auc_score
 msl_aggr_DE_79to21 = pd.read_csv(config.file_path_ext_ssd + 'features_mean_std_mslDeutschland.csv', sep=';')
 msl_aggr_DE_79to21['Dates'] = msl_aggr_DE_79to21['Dates'].apply(
     lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
-msl_aggr_DE_79to21 = msl_aggr_DE_79to21.rename(columns = {'Dates': 'Date', 'mean': 'mslp_mean', 'std': 'mslp_std'})
+msl_aggr_DE_79to21 = msl_aggr_DE_79to21.rename(columns = {'Dates': 'Date', 'mean': 'mslp mean DE', 'std': 'mslp std DE'})
 
 msl_aggr_GWL_79to21 = pd.read_csv(config.file_path_ext_ssd + 'features_mean_std_msl_all.csv', sep=';')
 msl_aggr_GWL_79to21['Date'] = msl_aggr_GWL_79to21['Dates'].apply(
@@ -39,7 +39,7 @@ msl_aggr_NL_79to21 = pd.concat([msl_aggr_NL_79to90, msl_aggr_NL_91to00, msl_aggr
 
 msl_aggr_NL_79to21['Dates'] = msl_aggr_NL_79to21['Dates'].apply(
     lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
-msl_aggr_NL_79to21 = msl_aggr_NL_79to21.rename(columns = {'Dates': 'Date', 'mean': 'mslp_mean_NL', 'std': 'mslp_std_NL'})
+msl_aggr_NL_79to21 = msl_aggr_NL_79to21.rename(columns = {'Dates': 'Date', 'mean': 'mslp mean NL', 'std': 'mslp std NL'})
 
 msl_aggr_PL_79to90 = pd.read_csv(config.file_path_ext_ssd + 'features_mean_std_mslPolska79to90.csv', sep = ';', encoding='latin1')
 msl_aggr_PL_91to00 = pd.read_csv(config.file_path_ext_ssd + 'features_mean_std_mslPolska91to00.csv', sep = ';', encoding='latin1')
@@ -50,7 +50,7 @@ msl_aggr_PL_79to21 = pd.concat([msl_aggr_PL_79to90, msl_aggr_PL_91to00, msl_aggr
 
 msl_aggr_PL_79to21['Dates'] = msl_aggr_PL_79to21['Dates'].apply(
     lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
-msl_aggr_PL_79to21 = msl_aggr_PL_79to21.rename(columns = {'Dates': 'Date', 'mean': 'mslp_mean_PL', 'std': 'mslp_std_PL'})
+msl_aggr_PL_79to21 = msl_aggr_PL_79to21.rename(columns = {'Dates': 'Date', 'mean': 'mslp mean PL', 'std': 'mslp std PL'})
 
 msl_aggr_FR_79to90 = pd.read_csv(config.file_path_ext_ssd + 'features_mean_std_mslFrance79to90.csv', sep = ';', encoding='latin1')
 msl_aggr_FR_91to00 = pd.read_csv(config.file_path_ext_ssd + 'features_mean_std_mslFrance91to00.csv', sep = ';', encoding='latin1')
@@ -61,12 +61,12 @@ msl_aggr_FR_79to21 = pd.concat([msl_aggr_FR_79to90, msl_aggr_FR_91to00, msl_aggr
 
 msl_aggr_FR_79to21['Dates'] = msl_aggr_FR_79to21['Dates'].apply(
     lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
-msl_aggr_FR_79to21 = msl_aggr_FR_79to21.rename(columns = {'Dates': 'Date', 'mean': 'mslp_mean_FR', 'std': 'mslp_std_FR'})
+msl_aggr_FR_79to21 = msl_aggr_FR_79to21.rename(columns = {'Dates': 'Date', 'mean': 'mslp mean FR', 'std': 'mslp std FR'})
 
 t2m_aggr_DE_79to21 = pd.read_csv(config.file_path_ext_ssd + 'features_mean_std_t2mDeutschland.csv', sep=';')
 t2m_aggr_DE_79to21['Dates'] = t2m_aggr_DE_79to21['Dates'].apply(
     lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
-t2m_aggr_DE_79to21 = t2m_aggr_DE_79to21.rename(columns = {'Dates': 'Date', 'mean': 't2m_mean', 'std': 't2m_std'})
+t2m_aggr_DE_79to21 = t2m_aggr_DE_79to21.rename(columns = {'Dates': 'Date', 'mean': 't2m mean DE', 'std': 't2m std DE'})
 
 dunkelflaute_dates_DE = pd.read_csv(
     'CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_' + str('DE') + str(
@@ -86,57 +86,62 @@ mastertableDFclassifier['DF_Indicator'] = DF_indices_0_1_encoding
 mastertableDFclassifier['Month'] = mastertableDFclassifier['Date'].apply(lambda x: x.month)
 mastertableDFclassifier['Hour'] = mastertableDFclassifier['Date'].apply(lambda x: x.hour)
 ohe = OneHotEncoder().fit_transform(X = pd.DataFrame(mastertableDFclassifier['Date'].apply(lambda x: x.month).values)).toarray()
-mastertableDFclassifier[['Ind_Jan', 'Ind_Feb', 'Ind_Mar', 'Ind_Apr', 'Ind_May', 'Ind_Jun', 'Ind_Jul', 'Ind_Aug', 'Ind_Sep', 'Ind_Oct', 'Ind_Nov', 'Ind_Dec']] = ohe
+mastertableDFclassifier[['Ind Jan', 'Ind Feb', 'Ind Mar', 'Ind Apr', 'Ind May', 'Ind Jun', 'Ind Jul', 'Ind Aug', 'Ind Sep', 'Ind Oct', 'Ind Nov', 'Ind Dec']] = ohe
 # --- Add Lags ---
-daily_mean = mastertableDFclassifier.set_index('Date')[['mslp_mean', 'mslp_std']].groupby(pd.Grouper(freq='d')).mean().rename({'mslp_mean': 'mslp_daily_mean', 'mslp_std': 'mslp_daily_std' }, axis = 'columns').reset_index()
+daily_mean = mastertableDFclassifier.set_index('Date')[['mslp mean DE', 'mslp std DE']].groupby(pd.Grouper(freq='d')).mean().rename({'mslp mean DE': 'mslp daily mean DE', 'mslp std DE': 'mslp daily std DE' }, axis = 'columns').reset_index()
 mastertableDFclassifier = mastertableDFclassifier.merge(daily_mean, on = 'Date', how = 'left')
 
-daily_max = mastertableDFclassifier.set_index('Date')[['mslp_mean', 'mslp_std']].groupby(pd.Grouper(freq='d')).max().rename({'mslp_mean': 'mslp_daily_mean_max', 'mslp_std': 'mslp_daily_std_max' }, axis = 'columns').reset_index()
+daily_max = mastertableDFclassifier.set_index('Date')[['mslp mean DE', 'mslp std DE']].groupby(pd.Grouper(freq='d')).max().rename({'mslp mean DE': 'mslp daily max of mean DE', 'mslp std DE': 'mslp daily max of std DE' }, axis = 'columns').reset_index()
 mastertableDFclassifier = mastertableDFclassifier.merge(daily_max, on = 'Date', how = 'left')
 
-daily_min = mastertableDFclassifier.set_index('Date')[['mslp_mean', 'mslp_std']].groupby(pd.Grouper(freq='d')).min().rename({'mslp_mean': 'mslp_daily_mean_min', 'mslp_std': 'mslp_daily_std_min' }, axis = 'columns').reset_index()
+daily_min = mastertableDFclassifier.set_index('Date')[['mslp mean DE', 'mslp std DE']].groupby(pd.Grouper(freq='d')).min().rename({'mslp mean DE': 'mslp daily min of mean DE', 'mslp std DE': 'mslp daily min of std DE' }, axis = 'columns').reset_index()
 mastertableDFclassifier = mastertableDFclassifier.merge(daily_min, on = 'Date', how = 'left')
 
-mastertableDFclassifier[['mslp_daily_mean', 'mslp_daily_std', 'mslp_daily_mean_max', 'mslp_daily_std_max', 'mslp_daily_mean_min', 'mslp_daily_std_min']] = mastertableDFclassifier[['mslp_daily_mean', 'mslp_daily_std', 'mslp_daily_mean_max', 'mslp_daily_std_max', 'mslp_daily_mean_min', 'mslp_daily_std_min']].fillna(method="ffill")
+mastertableDFclassifier[['mslp daily mean DE', 'mslp daily std DE', 'mslp daily max of mean DE', 'mslp daily max of std DE', 'mslp daily min of mean DE', 'mslp daily min of std DE']] = mastertableDFclassifier[['mslp daily mean DE', 'mslp daily std DE', 'mslp daily max of mean DE', 'mslp daily max of std DE', 'mslp daily min of mean DE', 'mslp daily min of std DE']].fillna(method="ffill")
 
-mastertableDFclassifier['Lag_1h_mslp_mean'] = mastertableDFclassifier['mslp_mean'].shift(1)
-mastertableDFclassifier['Lag_2h_mslp_mean'] = mastertableDFclassifier['mslp_mean'].shift(2)
-mastertableDFclassifier['Lag_5h_mslp_mean'] = mastertableDFclassifier['mslp_mean'].shift(5)
-mastertableDFclassifier['Lag_24h_mslp_mean'] = mastertableDFclassifier['mslp_mean'].shift(24)
-mastertableDFclassifier['Lag_48h_mslp_mean'] = mastertableDFclassifier['mslp_mean'].shift(48)
-mastertableDFclassifier['Lag_120h_mslp_mean'] = mastertableDFclassifier['mslp_mean'].shift(120)
+mastertableDFclassifier['mslp mean DE lag 1h'] = mastertableDFclassifier['mslp mean DE'].shift(1)
+mastertableDFclassifier['mslp mean DE lag 2h'] = mastertableDFclassifier['mslp mean DE'].shift(2)
+mastertableDFclassifier['mslp mean DE lag 5h'] = mastertableDFclassifier['mslp mean DE'].shift(5)
+mastertableDFclassifier['mslp mean DE lag 24h'] = mastertableDFclassifier['mslp mean DE'].shift(24)
+mastertableDFclassifier['mslp mean DE lag 48h'] = mastertableDFclassifier['mslp mean DE'].shift(48)
+mastertableDFclassifier['mslp mean DE lag 120h'] = mastertableDFclassifier['mslp mean DE'].shift(120)
 
-mastertableDFclassifier['Lag_24h_mslp_mean_PL'] = mastertableDFclassifier['mslp_mean_PL'].shift(24)
-mastertableDFclassifier['Lag_24h_mslp_mean_NL'] = mastertableDFclassifier['mslp_mean_NL'].shift(24)
-mastertableDFclassifier['Lag_24h_mslp_mean_FR'] = mastertableDFclassifier['mslp_mean_FR'].shift(24)
+mastertableDFclassifier['mslp mean PL lag 24h'] = mastertableDFclassifier['mslp mean PL'].shift(24)
+mastertableDFclassifier['mslp mean NL lag 24h'] = mastertableDFclassifier['mslp mean NL'].shift(24)
+mastertableDFclassifier['mslp mean FR lag 24h'] = mastertableDFclassifier['mslp mean FR'].shift(24)
 
-mastertableDFclassifier['Lag_120h_mslp_mean_PL'] = mastertableDFclassifier['mslp_mean_PL'].shift(120)
-mastertableDFclassifier['Lag_120h_mslp_mean_NL'] = mastertableDFclassifier['mslp_mean_NL'].shift(120)
-mastertableDFclassifier['Lag_120h_mslp_mean_FR'] = mastertableDFclassifier['mslp_mean_FR'].shift(120)
+mastertableDFclassifier['mslp mean PL lag 120h'] = mastertableDFclassifier['mslp mean PL'].shift(120)
+mastertableDFclassifier['mslp mean NL lag 120h'] = mastertableDFclassifier['mslp mean NL'].shift(120)
+mastertableDFclassifier['mslp mean FR lag 120h'] = mastertableDFclassifier['mslp mean FR'].shift(120)
 
-mastertableDFclassifier['Lag_1h_mslp_std'] = mastertableDFclassifier['mslp_std'].shift(1)
-mastertableDFclassifier['Lag_2h_mslp_std'] = mastertableDFclassifier['mslp_std'].shift(2)
-mastertableDFclassifier['Lag_5h_mslp_std'] = mastertableDFclassifier['mslp_std'].shift(5)
-mastertableDFclassifier['Lag_24h_mslp_std'] = mastertableDFclassifier['mslp_std'].shift(24)
-mastertableDFclassifier['Lag_48h_mslp_std'] = mastertableDFclassifier['mslp_std'].shift(48)
-mastertableDFclassifier['Lag_120h_mslp_std'] = mastertableDFclassifier['mslp_std'].shift(120)
+mastertableDFclassifier['mslp std DE lag 1h'] = mastertableDFclassifier['mslp std DE'].shift(1)
+mastertableDFclassifier['mslp std DE lag 2h'] = mastertableDFclassifier['mslp std DE'].shift(2)
+mastertableDFclassifier['mslp std DE lag 5h'] = mastertableDFclassifier['mslp std DE'].shift(5)
+mastertableDFclassifier['mslp std DE lag 24h'] = mastertableDFclassifier['mslp std DE'].shift(24)
+mastertableDFclassifier['mslp std DE lag 48h'] = mastertableDFclassifier['mslp std DE'].shift(48)
+mastertableDFclassifier['mslp std DE lag 120h'] = mastertableDFclassifier['mslp std DE'].shift(120)
 
-mastertableDFclassifier['Lag_120h_mslp_std_PL'] = mastertableDFclassifier['mslp_std_PL'].shift(120)
-mastertableDFclassifier['Lag_120h_mslp_std_NL'] = mastertableDFclassifier['mslp_std_NL'].shift(120)
-mastertableDFclassifier['Lag_120h_mslp_std_FR'] = mastertableDFclassifier['mslp_std_FR'].shift(120)
+mastertableDFclassifier['mslp std PL lag 24h'] = mastertableDFclassifier['mslp std PL'].shift(24)
+mastertableDFclassifier['mslp std NL lag 24h'] = mastertableDFclassifier['mslp std NL'].shift(24)
+mastertableDFclassifier['mslp std FR lag 24h'] = mastertableDFclassifier['mslp std FR'].shift(24)
 
-mastertableDFclassifier['Lag_24h_t2m_mean'] = mastertableDFclassifier['t2m_mean'].shift(24)
-mastertableDFclassifier['Lag_48h_t2m_mean'] = mastertableDFclassifier['t2m_mean'].shift(48)
-mastertableDFclassifier['Lag_120h_t2m_mean'] = mastertableDFclassifier['t2m_mean'].shift(120)
+mastertableDFclassifier['mslp std PL lag 120h'] = mastertableDFclassifier['mslp std PL'].shift(120)
+mastertableDFclassifier['mslp std NL lag 120h'] = mastertableDFclassifier['mslp std NL'].shift(120)
+mastertableDFclassifier['mslp std FR lag 120h'] = mastertableDFclassifier['mslp std FR'].shift(120)
 
-mastertableDFclassifier['Lag_24h_t2m_std'] = mastertableDFclassifier['t2m_std'].shift(24)
-mastertableDFclassifier['Lag_48h_t2m_std'] = mastertableDFclassifier['t2m_std'].shift(48)
-mastertableDFclassifier['Lag_120h_t2m_std'] = mastertableDFclassifier['t2m_std'].shift(120)
+mastertableDFclassifier['t2m mean DE lag 24h'] = mastertableDFclassifier['t2m mean DE'].shift(24)
+mastertableDFclassifier['t2m mean DE lag 48h'] = mastertableDFclassifier['t2m mean DE'].shift(48)
+mastertableDFclassifier['t2m mean DE lag 120h'] = mastertableDFclassifier['t2m mean DE'].shift(120)
+
+mastertableDFclassifier['t2m std DE lag 24h'] = mastertableDFclassifier['t2m std DE'].shift(24)
+mastertableDFclassifier['t2m std DE lag 48h'] = mastertableDFclassifier['t2m std DE'].shift(48)
+mastertableDFclassifier['t2m std DE lag 120h'] = mastertableDFclassifier['t2m std DE'].shift(120)
 
 for col in msl_aggr_GWL_79to21.columns[1:-1]:
     mastertableDFclassifier[str(col) + '_Lag_24h'] = mastertableDFclassifier[str(col)].shift(24)
     mastertableDFclassifier[str(col) + '_Lag_120h'] = mastertableDFclassifier[str(col)].shift(120)
 
+mastertableDFclassifier = mastertableDFclassifier.rename(columns = {'mean_Greenland': 'mslp mean Greenland', 'std_Greenland': 'mslp std Greenland', 'mean_Iceland': 'mslp mean Iceland', 'std_Iceland': 'mslp std Iceland', 'mean_British_Isles': 'mslp mean British Isles', 'std_British_Isles': 'mslp std British Isles', 'mean_Mediterranean_Sea': 'mslp mean Mediterranean Sea', 'std_Mediterranean_Sea': 'mslp std Mediterranean Sea', 'mean_Sea_west_Iberian_Peninsula': 'mslp mean Sea west Iberian Peninsula', 'std_Sea_west_Iberian_Peninsula': 'mslp std Sea west Iberian Peninsula', 'mean_Norwegian_Sea': 'mslp mean Norwegian Sea', 'std_Norwegian_Sea': 'mslp std Norwegian Sea', 'mean_North_Sea': 'mslp mean North Sea', 'std_North_Sea': 'mslp std North Sea', 'mean_Western_Russia': 'mslp mean Western Russia', 'std_Western_Russia': 'mslp std Western Russia', 'mean_Sweden': 'mslp mean Sweden', 'std_Sweden': 'mslp std Sweden'})
 
 #mastertableDFclassifier = mastertableDFclassifier[mastertableDFclassifier['Date'].apply(lambda x: x.hour) == 11]
 # Test
@@ -172,9 +177,31 @@ mastertableDFclassifier = mastertableDFclassifier.reset_index().drop(columns = '
 #                              , 'mean_Greenland_Lag_24h' , 'mean_British_Isles_Lag_24h',  'mean_Mediterranean_Sea_Lag_24h', 'mean_Sea_west_Iberian_Peninsula_Lag_24h','mean_Norwegian_Sea_Lag_24h' , 'mean_North_Sea_Lag_24h', 'mean_Western_Russia_Lag_24h',  'mean_Sweden_Lag_24h'
 #                             , 'mean_Greenland_Lag_120h', 'mean_British_Isles_Lag_120h', 'mean_Mediterranean_Sea_Lag_120h', 'mean_Sea_west_Iberian_Peninsula_Lag_120h', 'mean_Norwegian_Sea_Lag_120h', 'mean_North_Sea_Lag_120h', 'mean_Western_Russia_Lag_120h', 'mean_Sweden_Lag_120h']]
 
-X = mastertableDFclassifier[['mslp_mean','mslp_std', 't2m_mean', 'Ind_Jan', 'Ind_Feb', 'Ind_Mar', 'Ind_Apr', 'Ind_May', 'Ind_Jun', 'Ind_Jul', 'Ind_Aug', 'Ind_Sep', 'Ind_Oct', 'Ind_Nov', 'Ind_Dec', 'mslp_daily_mean', 'mslp_daily_std', 'mslp_daily_mean_max', 'mslp_daily_std_max', 'mslp_daily_mean_min', 'mslp_daily_std_min', 'Lag_1h_mslp_mean', 'Lag_2h_mslp_mean', 'Lag_5h_mslp_mean', 'Lag_1h_mslp_std', 'Lag_2h_mslp_std' , 'Lag_5h_mslp_std', 'Lag_120h_t2m_mean', 'Lag_120h_mslp_std', 'mslp_mean_PL', 'mslp_std_PL', 'mslp_mean_NL', 'mslp_std_NL', 'mslp_mean_FR', 'mslp_std_FR', 'Lag_120h_mslp_mean_PL', 'Lag_120h_mslp_std_PL', 'Lag_120h_mslp_mean_NL', 'Lag_120h_mslp_std_NL', 'Lag_120h_mslp_mean_FR', 'Lag_120h_mslp_std_FR', 'Lag_24h_mslp_mean_PL', 'Lag_24h_mslp_mean_NL',  'Lag_24h_mslp_mean_FR'
-                             , 'mean_Greenland' , 'mean_British_Isles',  'mean_Mediterranean_Sea', 'mean_Sea_west_Iberian_Peninsula','mean_Norwegian_Sea' , 'mean_North_Sea', 'mean_Western_Russia',  'mean_Sweden'
-                            , 'mean_Greenland_Lag_24h' , 'mean_British_Isles_Lag_24h',  'mean_Mediterranean_Sea_Lag_24h', 'mean_Sea_west_Iberian_Peninsula_Lag_24h','mean_Norwegian_Sea_Lag_24h' , 'mean_North_Sea_Lag_24h', 'mean_Western_Russia_Lag_24h',  'mean_Sweden_Lag_24h']]
+# X = mastertableDFclassifier[['mslp mean DE', 'mslp mean DE lag 5h', 'mslp mean DE lag 24h', 'mslp mean DE lag 48h', 'mslp mean DE lag 120h',
+#                              'mslp std DE', 'mslp std DE lag 5h', 'mslp std DE lag 24h', 'mslp std DE lag 48h', 'mslp std DE lag 120h',
+#                              't2m mean DE', 't2m mean DE lag 24h', 't2m mean DE lag 48h', 't2m mean DE lag 120h',
+#                              't2m std DE', 't2m std DE lag 24h', 't2m std DE lag 48h', 't2m std DE lag 120h',
+#                             'mslp daily mean DE', 'mslp daily std DE', 'mslp daily max of mean DE', 'mslp daily max of std DE', 'mslp daily min of mean DE', 'mslp daily min of std DE',
+#                             'mslp mean PL', 'mslp std PL', 'mslp mean NL', 'mslp std NL', 'mslp mean FR', 'mslp std FR',
+#                             'mslp mean PL lag 24h', 'mslp std PL lag 24h', 'mslp mean NL lag 24h', 'mslp std NL lag 24h', 'mslp mean FR lag 24h', 'mslp std FR lag 24h',
+#                              'mslp mean PL lag 120h', 'mslp std PL lag 120h', 'mslp mean NL lag 120h','mslp std NL lag 120h', 'mslp mean FR lag 120h', 'mslp std FR lag 120h',
+#                              'mslp mean Greenland' , 'mslp mean Iceland' , 'mslp mean British Isles',  'mslp mean Mediterranean Sea', 'mslp mean Sea west Iberian Peninsula','mslp mean Norwegian Sea' , 'mslp mean North Sea', 'mslp mean Western Russia',  'mslp mean Sweden',
+#                              'mslp std Greenland', 'mslp std Iceland', 'mslp std British Isles',
+#                              'mslp std Mediterranean Sea', 'mslp std Sea west Iberian Peninsula',
+#                              'mslp std Norwegian Sea', 'mslp std North Sea', 'mslp std Western Russia',
+#                              'mslp std Sweden',
+#                              'Ind Jan', 'Ind Feb', 'Ind Mar', 'Ind Apr', 'Ind May', 'Ind Jun', 'Ind Jul', 'Ind Aug', 'Ind Sep', 'Ind Oct', 'Ind Nov', 'Ind Dec']]
+
+X = mastertableDFclassifier[['mslp mean DE', 'mslp mean DE lag 5h', 'mslp mean DE lag 24h', 'mslp mean DE lag 48h', 'mslp mean DE lag 120h',
+                             'mslp std DE', 'mslp std DE lag 5h', 'mslp std DE lag 24h', 'mslp std DE lag 48h', 'mslp std DE lag 120h',
+                             't2m mean DE', 't2m mean DE lag 24h', 't2m mean DE lag 48h', 't2m mean DE lag 120h',
+                            'mslp daily mean DE', 'mslp daily std DE', 'mslp daily max of mean DE', 'mslp daily max of std DE', 'mslp daily min of mean DE', 'mslp daily min of std DE',
+                            'mslp mean PL', 'mslp std PL', 'mslp mean NL', 'mslp std NL', 'mslp mean FR', 'mslp std FR',
+                            'mslp mean PL lag 24h', 'mslp std PL lag 24h', 'mslp mean NL lag 24h', 'mslp std NL lag 24h', 'mslp mean FR lag 24h', 'mslp std FR lag 24h',
+                             'mslp mean PL lag 120h', 'mslp std PL lag 120h', 'mslp mean NL lag 120h','mslp std NL lag 120h', 'mslp mean FR lag 120h', 'mslp std FR lag 120h',
+                             'mslp mean Greenland' , 'mslp mean Iceland' , 'mslp mean British Isles',  'mslp mean Mediterranean Sea', 'mslp mean Sea west Iberian Peninsula','mslp mean Norwegian Sea' , 'mslp mean North Sea', 'mslp mean Western Russia',  'mslp mean Sweden',
+                             'mslp std Sweden',
+                             'Ind Jan', 'Ind Feb', 'Ind Mar', 'Ind Apr', 'Ind May', 'Ind Jun', 'Ind Jul', 'Ind Aug', 'Ind Sep', 'Ind Oct', 'Ind Nov', 'Ind Dec']]
 
 y = mastertableDFclassifier['DF_Indicator']
 
@@ -274,6 +301,66 @@ print(1)
 # precision_5 = precision_score(y_test, knn_res_y_5.values)
 # recall_5 = recall_score(y_test, knn_res_y_5.values)
 
+
+from numpy import sqrt
+from numpy import argmax
+
+from sklearn.linear_model import LogisticRegression
+from matplotlib import pyplot
+from sklearn.metrics import roc_curve
+
+brf200 = BalancedRandomForestClassifier(n_estimators=200, random_state=0).fit(X_train, y_train)
+pred_brf200 = brf200.predict_proba(X_test)
+
+brf400 = BalancedRandomForestClassifier(n_estimators=400, random_state=0).fit(X_train, y_train)
+pred_brf400 = brf400.predict_proba(X_test)
+
+rfc200 = RandomForestClassifier(random_state=0, n_estimators= 200).fit(X_train, y_train)
+pred_rfc200 = rfc200.predict_proba(X_test)
+
+rfc400 = RandomForestClassifier(random_state=0, n_estimators= 400).fit(X_train, y_train)
+pred_rfc400 = rfc400.predict_proba(X_test)
+
+# calculate roc curves
+red_names = [pred_brf200, pred_brf400, pred_rfc200, pred_rfc400]
+red_labels = ['BRF 200 Trees', 'BRF 400 Trees', 'RF 200 Trees', 'RF 400 Trees']
+fig, ax = plt.subplots(2, 2, figsize=(16, 16), dpi=120)
+k = 0
+for i in range(0, 4):
+    fpr, tpr, thresholds = roc_curve(y_test, red_names[i][:, 1])
+    # calculate the g-mean for each threshold
+    gmeans = sqrt(tpr * (1 - fpr))
+    # locate the index of the largest g-mean
+    ix = argmax(gmeans)
+    print('Best Threshold=%f, G-Mean=%.3f' % (thresholds[ix], gmeans[ix]))
+    weighted_acc = 0.8 * tpr + 0.2 * (1 - fpr)
+    # locate the index of the largest g-mean
+    ix_weighted_acc = argmax(weighted_acc)
+    print('Best Threshold=%f, weighted_acc=%.3f' % (thresholds[ix], weighted_acc[ix]))
+    # plot the roc curve for the model
+    plt.subplot(2, 2, (i + 1))
+    plt.title(str(red_labels[k]), fontsize=24)
+    plt.plot([0, 1], [0, 1], linestyle='--', label='No Skill', color='mediumaquamarine')
+    plt.plot(fpr, tpr, marker='.', label='ROC curve', color='teal')
+    plt.scatter(fpr[ix], tpr[ix], marker='o', s=80, color='indigo',
+                label='Best G-Mean ' + str(np.round(max(gmeans), 3)))
+    plt.scatter(fpr[ix_weighted_acc], tpr[ix_weighted_acc], marker='o', s=80, color='mediumorchid',
+                label='Best Weighted Accuracy ' + str(np.round(max(weighted_acc), 3)))
+    # axis labels
+    plt.xlabel('False Positive Rate', fontsize=20)
+    plt.ylabel('True Positive Rate', fontsize=20)
+    plt.xticks(fontsize=19)
+    plt.yticks(fontsize=19)
+    plt.legend(fontsize=18)
+    k = k + 1
+    plt.tight_layout()
+    plt.savefig(
+        'ROCCurves.png')
+    # show the plot
+
+pyplot.show()
+
+
 rfc = RandomForestClassifier(random_state=0, min_samples_leaf = 2, n_estimators= 200).fit(X_train, y_train)
 pred_rfc = rfc.predict_proba(X_test)
 #
@@ -291,7 +378,20 @@ recall_logreg_rfc = recall_score(y_test, clf_res_y_rfc.values)
 #brf = BalancedRandomForestClassifier(n_estimators=50, random_state=0)
 brf = BalancedRandomForestClassifier(n_estimators=200, random_state=0).fit(X_train, y_train)
 pred_brf = brf.predict_proba(X_test)
-brf.feature_importances_
+brf_feature_imp = brf.feature_importances_
+forest_importances = pd.Series(brf_feature_imp, index=X.columns)
+forest_importances = forest_importances.sort_values()
+
+std = np.std([tree.feature_importances_ for tree in brf.estimators_], axis=0)
+fig, ax = plt.subplots(figsize=(16, 25), dpi=100)
+forest_importances.plot.barh(ax=ax, color = 'teal')
+ax.set_title("Feature importances",  fontsize=33)
+plt.rc('xtick', labelsize=23)
+plt.rc('ytick', labelsize=23)
+fig.tight_layout()
+plt.savefig(
+   'Feature_importance_all.png')
+fig.show()
 #
 clf_pred_m_brf = pd.DataFrame(pred_brf)
 clf_pred_m_brf['real'] = y_test.values
