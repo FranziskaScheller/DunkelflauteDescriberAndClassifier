@@ -315,11 +315,10 @@ pred_brf200 = brf200.predict_proba(X_test)
 brf400 = BalancedRandomForestClassifier(n_estimators=400, random_state=0).fit(X_train, y_train)
 pred_brf400 = brf400.predict_proba(X_test)
 #
-# rfc200 = RandomForestClassifier(random_state=0, n_estimators= 200).fit(X_train, y_train)
-# pred_rfc200 = rfc200.predict_proba(X_test)
-#
-# rfc400 = RandomForestClassifier(random_state=0, n_estimators= 400).fit(X_train, y_train)
-# pred_rfc400 = rfc400.predict_proba(X_test)
+rfc200 = RandomForestClassifier(random_state=0, n_estimators= 200).fit(X_train, y_train)
+pred_rfc200 = rfc200.predict_proba(X_test)
+rfc400 = RandomForestClassifier(random_state=0, n_estimators= 400).fit(X_train, y_train)
+pred_rfc400 = rfc400.predict_proba(X_test)
 #
 # # calculate roc curves
 # red_names = [pred_brf200, pred_brf400, pred_rfc200, pred_rfc400]
@@ -362,57 +361,57 @@ pred_brf400 = brf400.predict_proba(X_test)
 #
 # pyplot.show()
 #
-# red_names = [[pred_brf200, pred_brf400], [pred_rfc200, pred_rfc400]]
-# red_labels = ['Balanced Random Forest with 200 and 400 Trees', 'Random Forest with 200 and 400 Trees']
-# fig, ax = plt.subplots(2, 1, figsize=(12, 26), dpi=120)
-# k = 0
-# for i in range(0, 2):
-#     fpr_200, tpr_200, thresholds_200 = roc_curve(y_test, red_names[i][0][:, 1])
-#     fpr_400, tpr_400, thresholds_400 = roc_curve(y_test, red_names[i][1][:, 1])
-#     # calculate the g-mean for each threshold
-#     gmeans_200 = sqrt(tpr_200 * (1 - fpr_200))
-#     gmeans_400 = sqrt(tpr_400 * (1 - fpr_400))
-#     # locate the index of the largest g-mean
-#     ix_200 = argmax(gmeans_200)
-#     ix_400 = argmax(gmeans_400)
-#     print('Best Threshold200=%f, G-Mean400=%.3f' % (thresholds_200[ix_200], gmeans_200[ix_200]))
-#     print('Best Threshold400=%f, G-Mean400=%.3f' % (thresholds_400[ix_400], gmeans_400[ix_400]))
-#     weighted_acc_200 = 0.666 * tpr_200 + (1-0.666) * (1 - fpr_200)
-#     # locate the index of the largest g-mean
-#     ix_weighted_acc_200 = argmax(weighted_acc_200)
-#     print('Best Threshold200=%f, weighted_acc200=%.3f' % (thresholds_200[ix_weighted_acc_200], weighted_acc_200[ix_weighted_acc_200]))
-#     print('AUC200: ' + str( roc_auc_score(y_test, red_names[i][0][:, 1])))
-#     weighted_acc_400 = 0.666 * tpr_400 + (1-0.666) * (1 - fpr_400)
-#     # locate the index of the largest g-mean
-#     ix_weighted_acc_400 = argmax(weighted_acc_400)
-#     print('Best Threshold_400=%f, weighted_acc_400=%.3f' % (thresholds_400[ix_weighted_acc_400], weighted_acc_400[ix_weighted_acc_400]))
-#     print('AUC_400: ' + str( roc_auc_score(y_test, red_names[i][1][:, 1])))
-#     # plot the roc curve for the model
-#     plt.subplot(2, 1, (i + 1))
-#     plt.title(str(red_labels[k]), fontsize=30)
-#     plt.plot([0, 1], [0, 1], linestyle='--', label='No Skill', color='mediumaquamarine', linewidth=3.5, zorder=-1)
-#     plt.plot(fpr_200, tpr_200, marker='.', label='ROC curve with 200 Trees', color='teal', linewidth=3.5, zorder=-1)
-#     plt.plot(fpr_400, tpr_400, marker='.', label='ROC curve with 400 Trees', color='darkslategrey', linewidth=3.5, zorder=-1)
-#     plt.scatter(fpr_200[ix_200], tpr_200[ix_200], marker='o', s=160, color='indigo',
-#                 label='Best G-Mean with 200 Trees ' + str(np.round(max(gmeans_200), 3)), zorder=1)
-#     plt.scatter(fpr_200[ix_weighted_acc_200], tpr_200[ix_weighted_acc_200], marker='o', s=160, color='mediumorchid',
-#                 label='Best Weighted Accuracy with 200 Trees ' + str(np.round(max(weighted_acc_200), 3)), zorder=1)
-#     plt.scatter(fpr_400[ix_400], tpr_400[ix_400], marker='o', s=160, color='gold',
-#                 label='Best G-Mean with 400 Trees ' + str(np.round(max(gmeans_400), 3)), zorder=1)
-#     plt.scatter(fpr_400[ix_weighted_acc_400], tpr_400[ix_weighted_acc_400], marker='o', s=160, color='orange',
-#                 label='Best Weighted Accuracy with 400 Trees ' + str(np.round(max(weighted_acc_400), 3)), zorder=1)
-#     # axis labels
-#     plt.xlabel('1 - True Negative Rate', fontsize=27)
-#     plt.ylabel('True Positive Rate', fontsize=27)
-#     plt.xticks(fontsize=25)
-#     plt.yticks(fontsize=25)
-#     plt.legend(fontsize=22)
-#     k = k + 1
-#     plt.tight_layout()
-#     #plt.savefig(
-#     #    'ROCCurves.png')
-#     # show the plot
-# pyplot.show()
+red_names = [[pred_brf200, pred_brf400], [pred_rfc200, pred_rfc400]]
+red_labels = ['Balanced Random Forest with 200 and 400 trees', 'Random Forest with 200 and 400 trees']
+fig, ax = plt.subplots(2, 1, figsize=(12, 26), dpi=120)
+k = 0
+for i in range(0, 2):
+    fpr_200, tpr_200, thresholds_200 = roc_curve(y_test, red_names[i][0][:, 1])
+    fpr_400, tpr_400, thresholds_400 = roc_curve(y_test, red_names[i][1][:, 1])
+    # calculate the g-mean for each threshold
+    gmeans_200 = sqrt(tpr_200 * (1 - fpr_200))
+    gmeans_400 = sqrt(tpr_400 * (1 - fpr_400))
+    # locate the index of the largest g-mean
+    ix_200 = argmax(gmeans_200)
+    ix_400 = argmax(gmeans_400)
+    print('Best Threshold200=%f, G-Mean400=%.3f' % (thresholds_200[ix_200], gmeans_200[ix_200]))
+    print('Best Threshold400=%f, G-Mean400=%.3f' % (thresholds_400[ix_400], gmeans_400[ix_400]))
+    weighted_acc_200 = 0.666 * tpr_200 + (1-0.666) * (1 - fpr_200)
+    # locate the index of the largest g-mean
+    ix_weighted_acc_200 = argmax(weighted_acc_200)
+    print('Best Threshold200=%f, weighted_acc200=%.3f' % (thresholds_200[ix_weighted_acc_200], weighted_acc_200[ix_weighted_acc_200]))
+    print('AUC200: ' + str( roc_auc_score(y_test, red_names[i][0][:, 1])))
+    weighted_acc_400 = 0.666 * tpr_400 + (1-0.666) * (1 - fpr_400)
+    # locate the index of the largest g-mean
+    ix_weighted_acc_400 = argmax(weighted_acc_400)
+    print('Best Threshold_400=%f, weighted_acc_400=%.3f' % (thresholds_400[ix_weighted_acc_400], weighted_acc_400[ix_weighted_acc_400]))
+    print('AUC_400: ' + str( roc_auc_score(y_test, red_names[i][1][:, 1])))
+    # plot the roc curve for the model
+    plt.subplot(2, 1, (i + 1))
+    plt.title(str(red_labels[k]), fontsize=30)
+    plt.plot([0, 1], [0, 1], linestyle='--', label='No Skill', color='mediumaquamarine', linewidth=3.5, zorder=-1)
+    plt.plot(fpr_200, tpr_200, marker='.', label='ROC curve with 200 trees', color='teal', linewidth=3.5, zorder=-1)
+    plt.plot(fpr_400, tpr_400, marker='.', label='ROC curve with 400 trees', color='darkslategrey', linewidth=3.5, zorder=-1)
+    plt.scatter(fpr_200[ix_200], tpr_200[ix_200], marker='o', s=160, color='indigo',
+                label='Best G-Mean with 200 trees ' + str(np.round(max(gmeans_200), 3)), zorder=1)
+    plt.scatter(fpr_200[ix_weighted_acc_200], tpr_200[ix_weighted_acc_200], marker='o', s=160, color='mediumorchid',
+                label='Best Weighted Accuracy with 200 trees ' + str(np.round(max(weighted_acc_200), 3)), zorder=1)
+    plt.scatter(fpr_400[ix_400], tpr_400[ix_400], marker='o', s=160, color='gold',
+                label='Best G-Mean with 400 trees ' + str(np.round(max(gmeans_400), 3)), zorder=1)
+    plt.scatter(fpr_400[ix_weighted_acc_400], tpr_400[ix_weighted_acc_400], marker='o', s=160, color='orange',
+                label='Best Weighted Accuracy with 400 trees ' + str(np.round(max(weighted_acc_400), 3)), zorder=1)
+   # axis labels
+    plt.xlabel('1 - True Negative Rate', fontsize=27)
+    plt.ylabel('True Positive Rate', fontsize=27)
+    plt.xticks(fontsize=25)
+    plt.yticks(fontsize=25)
+    plt.legend(fontsize=22)
+    k = k + 1
+    plt.tight_layout()
+    plt.savefig(
+        'ROCCurves.png')
+    # show the plot
+pyplot.show()
 #
 
 
@@ -560,13 +559,17 @@ pred_dummy_clf = dummy_clf.predict_proba(X_test)
 # recall_logreg = recall_score(y_test, clf_res_y.values)
 
 #---
-res_eval_df_probs = pd.DataFrame(mastertableDFclassifier[mastertableDFclassifier.index.isin(X_test.index)].Date, columns = ['Date'])
-res_eval_df_probs['DF_ind'] = y_test
-res_eval_df_probs['DF_pred'] = pred_cfl[:,1]
+# res_eval_df_probs = pd.DataFrame(mastertableDFclassifier[mastertableDFclassifier.index.isin(X_test.index)].Date, columns = ['Date'])
+# res_eval_df_probs['DF_ind'] = y_test
+# res_eval_df_probs['DF_pred'] = pred_cfl[:,1]
+
+clf_res_y_brf = np.zeros(len(y_test))
+clf_res_y_brf[pred_brf[:,1] >= 0.198] = 1
+clf_res_y_brf = pd.DataFrame(clf_res_y_brf)
 
 res_eval_df_probs_rfc = pd.DataFrame(mastertableDFclassifier[mastertableDFclassifier.index.isin(X_test.index)].Date, columns = ['Date'])
 res_eval_df_probs_rfc['DF_ind'] = y_test
-res_eval_df_probs_rfc['DF_pred'] = pred_rfc[:,1]
+res_eval_df_probs_rfc['DF_pred'] = pred_brf[:,1]
 
 
 # fig, axs = plt.subplots(len(res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].Date.apply(lambda x: x.year).unique()))
@@ -670,16 +673,16 @@ plt.show()
 #
 #     matplotlib.rc('xtick', labelsize=13)
 #     matplotlib.rc('ytick', labelsize=13)
-#     # plt.savefig(
-#     #    'ClassificationResults_Probabilities_all_rfc_incl_CFs' + str(year_i) + '.png')
-#     # ax.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d'))
-#     # plt.plot(res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].Date, res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].DF_pred)
+#     plt.savefig(
+#     'ClassificationResults_Probabilities_all_rfc_incl_CFs' + str(year_i) + '.png')
+#     #ax.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d'))
+#     plt.plot(res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].Date, res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].DF_pred)
 #     i = i + 1
 #     plt.show()
 
 i = 0
 for year_i in res_eval_df_probs_rfc[res_eval_df_probs_rfc['DF_ind'] == 1].Date.apply(lambda x: x.year).unique():
-    fig, ax = plt.subplots(4, figsize=(23, 7), dpi=90)
+    fig, ax = plt.subplots(4, figsize=(23, 9), dpi=90)
     data_wind_year_i = installed_capacity_factor_wind_power_ons[
         installed_capacity_factor_wind_power_ons['Date'].apply(lambda x: x.year).isin([year_i])]
     data_solar_year_i = installed_capacity_factor_solar_pv_power[
@@ -690,11 +693,11 @@ for year_i in res_eval_df_probs_rfc[res_eval_df_probs_rfc['DF_ind'] == 1].Date.a
     data_year_i_df = res_eval_df_probs_rfc[
         (res_eval_df_probs_rfc['DF_ind'] == 1) & (res_eval_df_probs_rfc['Date'].apply(lambda x: x.year).isin([year_i]))]
     # data_year_i_df = res_eval_df_probs_rfc[(res_eval_df_probs_rfc['DF_ind'] == 1) & (res_eval_df_probs_rfc['Date'].apply(lambda x: x.year).isin([year_i]))]
-    ax[0].plot(data_wind_year_i['Date'], data_wind_year_i['DE'], color='navy', label='Onshore wind adjusted CF')
-    ax[1].plot(data_solar_year_i['Date'], data_solar_year_i['DE'], color='indigo', label='Solar adjusted CF')
+    ax[0].plot(data_wind_year_i['Date'], data_wind_year_i['DE'], color='navy', label='Adjusted onshore wind CF')
+    ax[1].plot(data_solar_year_i['Date'], data_solar_year_i['DE'], color='indigo', label='Adjusted solar CF')
     ax[2].plot(data_sum_year_i['Date'], data_sum_year_i['sum'], color='violet',
-               label='Sum (Onshore wind + solar) adjusted CFs')
-    ax[3].plot(data_year_i['Date'], data_year_i['DF_pred'], color='teal', label='Probability Classifier')
+               label='Sum of adjusted onshore wind and solar CF')
+    ax[3].plot(data_year_i['Date'], data_year_i['DF_pred'], color='teal', label='Probability BRF classifier')
     ax[3].scatter(data_year_i_df['Date'], data_year_i_df['DF_pred'], s=7, color='crimson', label='Dunkelflaute', zorder=1)
     # ax = plt.scatter(data_year_i_df['Date'], data_year_i_df['DF_pred'])
     ax[0].hlines(0.5, data_solar_year_i['Date'].iloc[0], data_solar_year_i['Date'].iloc[-1], 'green')

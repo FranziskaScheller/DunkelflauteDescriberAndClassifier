@@ -35,29 +35,6 @@ address = location.raw['address']
 
 if config.prepfile:
 
-    data_dir = 'ref-nuts-2021–01m/'
-    path_rg = data_dir + "NUTS_RG_01M_2021_3035_LEVL_0.json"
-    gdf_rg = gpd.read_file(path_rg)
-    path_bn = data_dir + "NUTS_BN_01M_2021_3035_LEVL_0.json"
-    gdf_bn = gpd.read_file(path_bn)
-    path_lb = data_dir + "NUTS_LB_2021_3035_LEVL_0.json"
-    gdf_lb = gpd.read_file(path_lb)
-
-
-    DF_Data_all_mean_msl_DE = pd.read_csv(
-        'DF_Data_all_mean_mslDE.csv', header=None, index_col=None, sep=';')
-    DF_Data_all_mean_msl_DE = DF_Data_all_mean_msl_DE / 100
-    DF_Data_all_mean_t2m_DE = pd.read_csv(
-        'DF_Data_all_mean_t2mDE.csv', header=None, index_col=None, sep=';')
-    DF_Data_all_mean_t2m_DE = DF_Data_all_mean_t2m_DE - 273.15
-    DF_Data_all_mean_ssrdDE = pd.read_csv(
-        'DF_Data_all_mean_ssrdDE.csv', header=None, index_col=None, sep=';')
-    DF_Data_all_mean_var_100_metre_wind_speedDE = pd.read_csv(
-        'DF_Data_all_mean_var_100_metre_wind_speedDE.csv', header=None,
-        index_col=None, sep=';')
-    DF_Data_all_mean_ws10DE = pd.read_csv(
-        'DF_Data_all_mean_ws10DE.csv', header=None, index_col=None, sep=';')
-
     fn = '/Volumes/PortableSSD/download19790102/H_ERA5_ECMW_T639_GHI_0000m_Euro_025d_S197901010000_E197901312300_INS_MAP_01h_NA-_noc_org_NA_NA---_NA---_NA---.nc'
     ds = nc.Dataset(fn)
     #
@@ -65,18 +42,160 @@ if config.prepfile:
     longitude = ds['longitude'][:]
     latitude = ds['latitude'][:]
 
-    location_df = pd.DataFrame(np.repeat(latitude, len(longitude)), columns= ['latitude'])
+    # DE DF
+    x = 0
+    if x == 0:
+        DF_Data_all_mean_msl_DE = pd.read_csv(
+            'DF_Data_all_mean_mslDE.csv', header=None, index_col=None, sep=';')
+        DF_Data_all_mean_msl_DE = DF_Data_all_mean_msl_DE / 100
+        DF_Data_all_mean_t2m_DE = pd.read_csv(
+            'DF_Data_all_mean_t2mDE.csv', header=None, index_col=None, sep=';')
+        DF_Data_all_mean_t2m_DE = DF_Data_all_mean_t2m_DE - 273.15
+        DF_Data_all_mean_ssrdDE = pd.read_csv(
+            'DF_Data_all_mean_ssrdDE.csv', header=None, index_col=None, sep=';')
+        DF_Data_all_mean_var_100_metre_wind_speedDE = pd.read_csv(
+            'DF_Data_all_mean_var_100_metre_wind_speedDE.csv', header=None,
+            index_col=None, sep=';')
+        DF_Data_all_mean_ws10DE = pd.read_csv(
+            'DF_Data_all_mean_ws10DE.csv', header=None, index_col=None, sep=';')
+
+        location_df = pd.DataFrame(np.repeat(latitude, len(longitude)), columns= ['latitude'])
+        longitudes = np.repeat(longitude, len(latitude))
+        longitudes_resh = longitudes.reshape(len(longitude), len(latitude)).T.reshape(len(longitude)* len(latitude),)
+        location_df['longitude'] = longitudes_resh
+        location_df['msl_DE'] = DF_Data_all_mean_msl_DE.values.reshape((len(location_df),1))
+        location_df['t2m_DE'] = DF_Data_all_mean_t2m_DE.values.reshape((len(location_df),1))
+        location_df['ssrdDE'] = DF_Data_all_mean_ssrdDE.values.reshape((len(location_df),1))
+        location_df['var_100_metre_wind_speedDE'] = DF_Data_all_mean_var_100_metre_wind_speedDE.values.reshape((len(location_df),1))
+        location_df['DF_Data_all_mean_ws10DE'] = DF_Data_all_mean_ws10DE.values.reshape((len(location_df),1))
+
+        location_df.to_csv(
+            'MeanClimatologicalData_DF_DE_reshaped.csv', sep=';', encoding='latin1', index=False)
+
+        DF_ref_Data_all_mean_msl_DE = pd.read_csv(
+            config.file_path_ext_ssd + 'DF_ref_Data_all_mean_mslDE.csv', header=None, index_col=None, sep=';')
+        DF_ref_Data_all_mean_msl_DE = DF_ref_Data_all_mean_msl_DE / 100
+        DF_ref_Data_all_mean_t2m_DE = pd.read_csv(
+            config.file_path_ext_ssd + 'DF_ref_Data_all_mean_t2mDE.csv', header=None, index_col=None, sep=';')
+        DF_ref_Data_all_mean_t2m_DE = DF_ref_Data_all_mean_t2m_DE - 273.15
+
+        DF_ref_Data_all_mean_ssrdDE = pd.read_csv(
+            config.file_path_ext_ssd + 'DF_ref_Data_all_mean_ssrdDE.csv', header=None, index_col=None, sep=';')
+        DF_ref_Data_all_mean_var_100_metre_wind_speedDE = pd.read_csv(
+            config.file_path_ext_ssd + 'DF_ref_Data_all_mean_var_100_metre_wind_speedDE.csv', header=None, index_col=None, sep=';')
+        DF_ref_Data_all_mean_ws10DE = pd.read_csv(
+            config.file_path_ext_ssd + 'DF_ref_Data_all_mean_ws10DE.csv', header=None, index_col=None, sep=';')
+
+        location_df_ref = pd.DataFrame(np.repeat(latitude, len(longitude)), columns= ['latitude'])
+        longitudes = np.repeat(longitude, len(latitude))
+        longitudes_resh = longitudes.reshape(len(longitude), len(latitude)).T.reshape(len(longitude)* len(latitude),)
+        location_df_ref['longitude'] = longitudes_resh
+        location_df_ref['msl_DE'] = DF_ref_Data_all_mean_msl_DE.values.reshape((len(location_df),1))
+        location_df_ref['t2m_DE'] = DF_ref_Data_all_mean_t2m_DE.values.reshape((len(location_df),1))
+        location_df_ref['ssrdDE'] = DF_ref_Data_all_mean_ssrdDE.values.reshape((len(location_df),1))
+        location_df_ref['var_100_metre_wind_speedDE'] = DF_ref_Data_all_mean_var_100_metre_wind_speedDE.values.reshape((len(location_df),1))
+        location_df_ref['DF_Data_all_mean_ws10DE'] = DF_ref_Data_all_mean_ws10DE.values.reshape((len(location_df),1))
+
+        location_df_ref.to_csv(
+            'MeanClimatologicalData_DF_DE_reshaped_ref.csv', sep=';', encoding='latin1', index=False)
+
+        DF_day_bf_Data_all_mean_msl_DE = pd.read_csv(
+            config.file_path_ext_ssd + 'DF_day_bf_Data_all_mean_mslDE.csv', header=None, index_col=None, sep=';')
+        DF_day_bf_Data_all_mean_msl_DE = DF_day_bf_Data_all_mean_msl_DE / 100
+        DF_day_bf_Data_all_mean_t2m_DE = pd.read_csv(
+            config.file_path_ext_ssd + 'DF_day_bf_Data_all_mean_t2mDE.csv', header=None, index_col=None, sep=';')
+        DF_day_bf_Data_all_mean_t2m_DE = DF_day_bf_Data_all_mean_t2m_DE - 273.15
+
+        DF_day_bf_Data_all_mean_ssrdDE = pd.read_csv(
+            config.file_path_ext_ssd + 'DF_day_bf_Data_all_mean_ssrdDE.csv', header=None, index_col=None, sep=';')
+        DF_day_bf_Data_all_mean_var_100_metre_wind_speedDE = pd.read_csv(
+            config.file_path_ext_ssd + 'DF_day_bf_Data_all_mean_var_100_metre_wind_speedDE.csv', header=None, index_col=None, sep=';')
+        DF_day_bf_Data_all_mean_ws10DE = pd.read_csv(
+            config.file_path_ext_ssd + 'DF_day_bf_Data_all_mean_ws10DE.csv', header=None, index_col=None, sep=';')
+
+        location_df_24bf = pd.DataFrame(np.repeat(latitude, len(longitude)), columns= ['latitude'])
+        longitudes = np.repeat(longitude, len(latitude))
+        longitudes_resh = longitudes.reshape(len(longitude), len(latitude)).T.reshape(len(longitude)* len(latitude),)
+        location_df_24bf['longitude'] = longitudes_resh
+        location_df_24bf['msl_DE'] = DF_day_bf_Data_all_mean_msl_DE.values.reshape((len(location_df),1))
+        location_df_24bf['t2m_DE'] = DF_day_bf_Data_all_mean_t2m_DE.values.reshape((len(location_df),1))
+        location_df_24bf['ssrdDE'] = DF_day_bf_Data_all_mean_ssrdDE.values.reshape((len(location_df),1))
+        location_df_24bf['var_100_metre_wind_speedDE'] = DF_day_bf_Data_all_mean_var_100_metre_wind_speedDE.values.reshape((len(location_df),1))
+        location_df_24bf['DF_Data_all_mean_ws10DE'] = DF_day_bf_Data_all_mean_ws10DE.values.reshape((len(location_df),1))
+
+        location_df_24bf.to_csv(
+            'MeanClimatologicalData_DF_DE_reshaped_24bf.csv', sep=';', encoding='latin1', index=False)
+
+
+    # DF PL
+    DF_Data_all_mean_msl_PL = pd.read_csv(
+        config.file_path_ext_ssd + '/means/' +'DF_Data_all_mean_mslPL.csv', header=None, index_col=None, sep=';')
+    DF_Data_all_mean_msl_PL = DF_Data_all_mean_msl_PL / 100
+    DF_Data_all_mean_t2m_PL = pd.read_csv(
+        config.file_path_ext_ssd + '/means/' +'DF_Data_all_mean_t2mPL.csv', header=None, index_col=None, sep=';')
+    DF_Data_all_mean_t2m_PL = DF_Data_all_mean_t2m_PL - 273.15
+    DF_Data_all_mean_ssrdPL = pd.read_csv(
+        config.file_path_ext_ssd + '/means/' +'DF_Data_all_mean_ssrdPL.csv', header=None, index_col=None, sep=';')
+    DF_Data_all_mean_var_100_metre_wind_speedPL = pd.read_csv(
+        config.file_path_ext_ssd + '/means/' +'DF_Data_all_mean_var_100_metre_wind_speedPL.csv', header=None,
+        index_col=None, sep=';')
+    DF_Data_all_mean_ws10PL = pd.read_csv(
+        config.file_path_ext_ssd + '/means/' +'DF_Data_all_mean_ws10PL.csv', header=None, index_col=None, sep=';')
+
+    location_df_other_countries = pd.DataFrame(np.repeat(latitude, len(longitude)), columns= ['latitude'])
     longitudes = np.repeat(longitude, len(latitude))
     longitudes_resh = longitudes.reshape(len(longitude), len(latitude)).T.reshape(len(longitude)* len(latitude),)
-    location_df['longitude'] = longitudes_resh
-    location_df['msl_DE'] = DF_Data_all_mean_msl_DE.values.reshape((len(location_df),1))
-    location_df['t2m_DE'] = DF_Data_all_mean_t2m_DE.values.reshape((len(location_df),1))
-    location_df['ssrdDE'] = DF_Data_all_mean_ssrdDE.values.reshape((len(location_df),1))
-    location_df['var_100_metre_wind_speedDE'] = DF_Data_all_mean_var_100_metre_wind_speedDE.values.reshape((len(location_df),1))
-    location_df['DF_Data_all_mean_ws10DE'] = DF_Data_all_mean_ws10DE.values.reshape((len(location_df),1))
+    location_df_other_countries['longitude'] = longitudes_resh
+    location_df_other_countries['msl_PL'] = DF_Data_all_mean_msl_PL.values.reshape((len(location_df_other_countries),1))
+    location_df_other_countries['t2m_PL'] = DF_Data_all_mean_t2m_PL.values.reshape((len(location_df_other_countries),1))
+    location_df_other_countries['ssrdPL'] = DF_Data_all_mean_ssrdPL.values.reshape((len(location_df_other_countries),1))
+    location_df_other_countries['var_100_metre_wind_speedPL'] = DF_Data_all_mean_var_100_metre_wind_speedPL.values.reshape((len(location_df_other_countries),1))
+    location_df_other_countries['ws10PL'] = DF_Data_all_mean_ws10PL.values.reshape((len(location_df_other_countries),1))
 
-    location_df.to_csv(
-        'MeanClimatologicalData_DF_DE_reshaped.csv', sep=';', encoding='latin1', index=False)
+    # DF PL
+    DF_Data_all_mean_msl_NL = pd.read_csv(
+        config.file_path_ext_ssd + '/means/' +'DF_Data_all_mean_mslNL.csv', header=None, index_col=None, sep=';')
+    DF_Data_all_mean_msl_NL = DF_Data_all_mean_msl_NL / 100
+    DF_Data_all_mean_t2m_NL = pd.read_csv(
+        config.file_path_ext_ssd + '/means/' +'DF_Data_all_mean_t2mNL.csv', header=None, index_col=None, sep=';')
+    DF_Data_all_mean_t2m_NL = DF_Data_all_mean_t2m_NL - 273.15
+    DF_Data_all_mean_ssrdNL = pd.read_csv(
+        config.file_path_ext_ssd + '/means/' +'DF_Data_all_mean_ssrdNL.csv', header=None, index_col=None, sep=';')
+    DF_Data_all_mean_var_100_metre_wind_speedNL = pd.read_csv(
+        config.file_path_ext_ssd + '/means/' +'DF_Data_all_mean_var_100_metre_wind_speedNL.csv', header=None,
+        index_col=None, sep=';')
+    DF_Data_all_mean_ws10NL = pd.read_csv(
+        config.file_path_ext_ssd + '/means/' +'DF_Data_all_mean_ws10NL.csv', header=None, index_col=None, sep=';')
+
+    location_df_other_countries['msl_NL'] = DF_Data_all_mean_msl_NL.values.reshape((len(location_df_other_countries),1))
+    location_df_other_countries['t2m_NL'] = DF_Data_all_mean_t2m_NL.values.reshape((len(location_df_other_countries),1))
+    location_df_other_countries['ssrdNL'] = DF_Data_all_mean_ssrdNL.values.reshape((len(location_df_other_countries),1))
+    location_df_other_countries['var_100_metre_wind_speedNL'] = DF_Data_all_mean_var_100_metre_wind_speedNL.values.reshape((len(location_df_other_countries),1))
+    location_df_other_countries['ws10NL'] = DF_Data_all_mean_ws10NL.values.reshape((len(location_df_other_countries),1))
+
+    # DF FR
+    DF_Data_all_mean_msl_FR = pd.read_csv(
+        config.file_path_ext_ssd + '/means/' +'DF_Data_all_mean_mslFR.csv', header=None, index_col=None, sep=';')
+    DF_Data_all_mean_msl_FR = DF_Data_all_mean_msl_FR / 100
+    DF_Data_all_mean_t2m_FR = pd.read_csv(
+        config.file_path_ext_ssd + '/means/' +'DF_Data_all_mean_t2mFR.csv', header=None, index_col=None, sep=';')
+    DF_Data_all_mean_t2m_FR = DF_Data_all_mean_t2m_FR - 273.15
+    DF_Data_all_mean_ssrdFR = pd.read_csv(
+        config.file_path_ext_ssd + '/means/' +'DF_Data_all_mean_ssrdFR.csv', header=None, index_col=None, sep=';')
+    DF_Data_all_mean_var_100_metre_wind_speedFR = pd.read_csv(
+        config.file_path_ext_ssd + '/means/' +'DF_Data_all_mean_var_100_metre_wind_speedFR.csv', header=None,
+        index_col=None, sep=';')
+    DF_Data_all_mean_ws10FR = pd.read_csv(
+        config.file_path_ext_ssd + '/means/' +'DF_Data_all_mean_ws10FR.csv', header=None, index_col=None, sep=';')
+
+    location_df_other_countries['msl_FR'] = DF_Data_all_mean_msl_FR.values.reshape((len(location_df_other_countries),1))
+    location_df_other_countries['t2m_FR'] = DF_Data_all_mean_t2m_FR.values.reshape((len(location_df_other_countries),1))
+    location_df_other_countries['ssrdFR'] = DF_Data_all_mean_ssrdFR.values.reshape((len(location_df_other_countries),1))
+    location_df_other_countries['var_100_metre_wind_speedFR'] = DF_Data_all_mean_var_100_metre_wind_speedFR.values.reshape((len(location_df_other_countries),1))
+    location_df_other_countries['ws10FR'] = DF_Data_all_mean_ws10FR.values.reshape((len(location_df_other_countries),1))
+
+    location_df_other_countries.to_csv(
+        'MeanClimatologicalData_DF_neighboringcountries_reshaped.csv', sep=';', encoding='latin1', index=False)
 
     print(1)
 
