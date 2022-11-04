@@ -363,7 +363,7 @@ pred_rfc400 = rfc400.predict_proba(X_test)
 #
 red_names = [[pred_brf200, pred_brf400], [pred_rfc200, pred_rfc400]]
 red_labels = ['Balanced Random Forest with 200 and 400 trees', 'Random Forest with 200 and 400 trees']
-fig, ax = plt.subplots(2, 1, figsize=(12, 26), dpi=120)
+fig, ax = plt.subplots(2, 1, figsize=(12, 24), dpi=120)
 k = 0
 for i in range(0, 2):
     fpr_200, tpr_200, thresholds_200 = roc_curve(y_test, red_names[i][0][:, 1])
@@ -389,17 +389,17 @@ for i in range(0, 2):
     # plot the roc curve for the model
     plt.subplot(2, 1, (i + 1))
     plt.title(str(red_labels[k]), fontsize=30)
-    plt.plot([0, 1], [0, 1], linestyle='--', label='No Skill', color='mediumaquamarine', linewidth=3.5, zorder=-1)
-    plt.plot(fpr_200, tpr_200, marker='.', label='ROC curve with 200 trees', color='teal', linewidth=3.5, zorder=-1)
-    plt.plot(fpr_400, tpr_400, marker='.', label='ROC curve with 400 trees', color='darkslategrey', linewidth=3.5, zorder=-1)
+    plt.plot([0, 1], [0, 1], linestyle='--', label='Random classification', color='mediumaquamarine', linewidth=3.5, zorder=-1)
+    plt.plot(fpr_200, tpr_200, marker='.', label='ROC curve for model with 200 trees', color='teal', linewidth=3.5, zorder=-1)
+    plt.plot(fpr_400, tpr_400, marker='.', label='ROC curve for model with 400 trees', color='darkslategrey', linewidth=3.5, zorder=-1)
     plt.scatter(fpr_200[ix_200], tpr_200[ix_200], marker='o', s=160, color='indigo',
-                label='Best G-Mean with 200 trees ' + str(np.round(max(gmeans_200), 3)), zorder=1)
+                label='Best G-Mean for model with 200 trees (' + str(np.round(max(gmeans_200), 3)) + ')', zorder=1)
     plt.scatter(fpr_200[ix_weighted_acc_200], tpr_200[ix_weighted_acc_200], marker='o', s=160, color='mediumorchid',
-                label='Best Weighted Accuracy with 200 trees ' + str(np.round(max(weighted_acc_200), 3)), zorder=1)
+                label='Best Weighted Accuracy for model with 200 trees (' + str(np.round(max(weighted_acc_200), 3)) + ')', zorder=1)
     plt.scatter(fpr_400[ix_400], tpr_400[ix_400], marker='o', s=160, color='gold',
-                label='Best G-Mean with 400 trees ' + str(np.round(max(gmeans_400), 3)), zorder=1)
+                label='Best G-Mean for model with 400 trees (' + str(np.round(max(gmeans_400), 3)) + ')', zorder=1)
     plt.scatter(fpr_400[ix_weighted_acc_400], tpr_400[ix_weighted_acc_400], marker='o', s=160, color='orange',
-                label='Best Weighted Accuracy with 400 trees ' + str(np.round(max(weighted_acc_400), 3)), zorder=1)
+                label='Best Weighted Accuracy for model with 400 trees (' + str(np.round(max(weighted_acc_400), 3)) + ')', zorder=1)
    # axis labels
     plt.xlabel('1 - True Negative Rate', fontsize=27)
     plt.ylabel('True Positive Rate', fontsize=27)
@@ -423,13 +423,27 @@ clf_pred_m_rfc = pd.DataFrame(pred_rfc)
 clf_pred_m_rfc['real'] = y_test.values
 #
 clf_res_y_rfc = np.zeros(len(y_test))
-clf_res_y_rfc[pred_rfc[:,1] >= 0.0025] = 1
+clf_res_y_rfc[pred_rfc[:,1] >= 0.0075] = 1
 clf_res_y_rfc = pd.DataFrame(clf_res_y_rfc)
 #
+from sklearn.metrics import precision_recall_fscore_support
 conf_mat_logreg_rfc = confusion_matrix(y_test, clf_res_y_rfc.values)
 precision_logreg_rfc = precision_score(y_test, clf_res_y_rfc.values)
 recall_logreg_rfc = recall_score(y_test, clf_res_y_rfc.values)
+f1 = (2 * precision_logreg_rfc * recall_logreg_rfc) / (precision_logreg_rfc + recall_logreg_rfc)
 
+fn = conf_mat_logreg_rfc[1][0]
+tp = conf_mat_logreg_rfc[1][1]
+tn = conf_mat_logreg_rfc[0][0]
+fp = conf_mat_logreg_rfc[0][1]
+tpr = tp / (tp + fn)
+tnr = tn / (tn + fp)
+gmean = sqrt(tpr * tnr)
+wacc = 2/3 * tpr + 1/3 * tnr
+
+
+from sklearn.metrics import precision_recall_fscore_support
+prf_rfc = precision_recall_fscore_support(y_test, clf_res_y_rfc.values)
 #brf = BalancedRandomForestClassifier(n_estimators=50, random_state=0)
 brf = BalancedRandomForestClassifier(n_estimators=400, random_state=0).fit(X_train, y_train)
 pred_brf = brf.predict_proba(X_test)
@@ -452,18 +466,47 @@ clf_pred_m_brf = pd.DataFrame(pred_brf)
 clf_pred_m_brf['real'] = y_test.values
 #
 clf_res_y_brf = np.zeros(len(y_test))
-clf_res_y_brf[pred_brf[:,1] >= 0.198] = 1
+clf_res_y_brf[pred_brf[:,1] >= 0.1975] = 1
 clf_res_y_brf = pd.DataFrame(clf_res_y_brf)
 #
 conf_mat_logreg_brf = confusion_matrix(y_test, clf_res_y_brf.values)
 precision_logreg_brf = precision_score(y_test, clf_res_y_brf.values)
 recall_logreg_brf = recall_score(y_test, clf_res_y_brf.values)
+prf_brfc = precision_recall_fscore_support(y_test, clf_res_y_brf.values)
 target_names = ['NoDF', 'DF']  # doctest : +NORMALIZE_WHITESPACE
 res_brt = classification_report_imbalanced(y_test.values, clf_res_y_brf.values, target_names=target_names)
 res_rf = classification_report_imbalanced(y_test.values, clf_res_y_rfc.values, target_names=target_names)
+# ---
+# f1 = (2 * precision_logreg_brf * recall_logreg_brf) / (precision_logreg_brf + recall_logreg_brf)
+#
+# fn = conf_mat_logreg_brf[1][0]
+# tp = conf_mat_logreg_brf[1][1]
+# tn = conf_mat_logreg_brf[0][0]
+# fp = conf_mat_logreg_brf[0][1]
+# tpr = tp / (tp + fn)
+# tnr = tn / (tn + fp)
+# gmean = sqrt(tpr * tnr)
+# wacc = 2/3 * tpr + 1/3 * tnr
+#
+# dummy_clf = DummyClassifier(strategy="stratified").fit(X_train, y_train)
+# pred_dummy_clf = dummy_clf.predict_proba(X_test)
+# conf_mat_logreg_dummy = confusion_matrix(y_test, pred_dummy_clf[:,1])
+# precision_logreg_dummy = precision_score(y_test, pred_dummy_clf[:,1])
+# recall_logreg_dummy = recall_score(y_test, pred_dummy_clf[:,1])
+# prf_dummy = precision_recall_fscore_support(y_test, pred_dummy_clf[:,1])
+#
+# f1 = (2 * precision_logreg_dummy * recall_logreg_dummy) / (precision_logreg_dummy + recall_logreg_dummy)
+#
+# fn = conf_mat_logreg_dummy[1][0]
+# tp = conf_mat_logreg_dummy[1][1]
+# tn = conf_mat_logreg_dummy[0][0]
+# fp = conf_mat_logreg_dummy[0][1]
+# tpr = tp / (tp + fn)
+# tnr = tn / (tn + fp)
+# gmean = sqrt(tpr * tnr)
+# wacc = 2/3 * tpr + 1/3 * tnr
 
-dummy_clf = DummyClassifier(strategy="stratified").fit(X_train, y_train)
-pred_dummy_clf = dummy_clf.predict_proba(X_test)
+# ---
 
 # r_auc_sc = roc_auc_score(y_test, pred_brf[:, 1])
 # from numpy import sqrt
@@ -564,7 +607,7 @@ pred_dummy_clf = dummy_clf.predict_proba(X_test)
 # res_eval_df_probs['DF_pred'] = pred_cfl[:,1]
 
 clf_res_y_brf = np.zeros(len(y_test))
-clf_res_y_brf[pred_brf[:,1] >= 0.198] = 1
+clf_res_y_brf[pred_brf[:,1] >= 0.1975] = 1
 clf_res_y_brf = pd.DataFrame(clf_res_y_brf)
 
 res_eval_df_probs_rfc = pd.DataFrame(mastertableDFclassifier[mastertableDFclassifier.index.isin(X_test.index)].Date, columns = ['Date'])
@@ -619,45 +662,45 @@ installed_capacity_factor_wind_power_ons_plus_solar['sum'] = installed_capacity_
 
 plt.scatter(res_eval_df_probs_rfc.reset_index().iloc[1618:]['DF_pred'], installed_capacity_factor_wind_power_ons_plus_solar['sum'].iloc[8760:])
 
-matplotlib.rc('xtick', labelsize=13)
-matplotlib.rc('ytick', labelsize=13)
-plt.ylim(bottom=0)
-plt.show()
-
-i = 0
-j = 0
-k = 0
-fig, ax = plt.subplots(2,7, figsize=(15, 7), dpi=90)
-for year_i in res_eval_df_probs_rfc[res_eval_df_probs_rfc['DF_ind'] == 1].Date.apply(lambda x: x.year).unique()[1:]:
-    data_sum_year_i = installed_capacity_factor_wind_power_ons_plus_solar[
-        installed_capacity_factor_wind_power_ons_plus_solar['Date'].apply(lambda x: x.year).isin([year_i])]
-    data_year_i = res_eval_df_probs_rfc[res_eval_df_probs_rfc['Date'].apply(lambda x: x.year).isin([year_i])]
-    data_year_i_df = res_eval_df_probs_rfc[
-        (res_eval_df_probs_rfc['DF_ind'] == 1) & (res_eval_df_probs_rfc['Date'].apply(lambda x: x.year).isin([year_i]))]
-    data_all = data_sum_year_i.merge(data_year_i, how = 'left', on = 'Date')
-
-    #ax[j, k].scatter(data_year_i['DF_pred'],
-    #            data_sum_year_i['sum'])
-    ax[j, k].scatter(data_all['DF_pred'],
-                data_all['sum'], s=3, color='indigo', label=str(year_i))
-
-    matplotlib.rc('xtick', labelsize=13)
-    matplotlib.rc('ytick', labelsize=13)
-    fig.legend()
-    #ax[j,k].ylim(bottom=0)
-    # plt.savefig(
-    #    'ClassificationResults_Probabilities_all_rfc_incl_CFs' + str(year_i) + '.png')
-    # ax.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d'))
-    # plt.plot(res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].Date, res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].DF_pred)
-    if k <= 5:
-        k = k + 1
-    else:
-        k = 0
-    if i >= 6:
-        j = 1
-    i = i + 1
-
-plt.show()
+# matplotlib.rc('xtick', labelsize=13)
+# matplotlib.rc('ytick', labelsize=13)
+# plt.ylim(bottom=0)
+# plt.show()
+#
+# i = 0
+# j = 0
+# k = 0
+# fig, ax = plt.subplots(2,7, figsize=(15, 7), dpi=90)
+# for year_i in res_eval_df_probs_rfc[res_eval_df_probs_rfc['DF_ind'] == 1].Date.apply(lambda x: x.year).unique()[1:]:
+#     data_sum_year_i = installed_capacity_factor_wind_power_ons_plus_solar[
+#         installed_capacity_factor_wind_power_ons_plus_solar['Date'].apply(lambda x: x.year).isin([year_i])]
+#     data_year_i = res_eval_df_probs_rfc[res_eval_df_probs_rfc['Date'].apply(lambda x: x.year).isin([year_i])]
+#     data_year_i_df = res_eval_df_probs_rfc[
+#         (res_eval_df_probs_rfc['DF_ind'] == 1) & (res_eval_df_probs_rfc['Date'].apply(lambda x: x.year).isin([year_i]))]
+#     data_all = data_sum_year_i.merge(data_year_i, how = 'left', on = 'Date')
+#
+#     #ax[j, k].scatter(data_year_i['DF_pred'],
+#     #            data_sum_year_i['sum'])
+#     ax[j, k].scatter(data_all['DF_pred'],
+#                 data_all['sum'], s=3, color='indigo', label=str(year_i))
+#
+#     matplotlib.rc('xtick', labelsize=13)
+#     matplotlib.rc('ytick', labelsize=13)
+#     fig.legend()
+#     #ax[j,k].ylim(bottom=0)
+#     # plt.savefig(
+#     #    'ClassificationResults_Probabilities_all_rfc_incl_CFs' + str(year_i) + '.png')
+#     # ax.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d'))
+#     # plt.plot(res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].Date, res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].DF_pred)
+#     if k <= 5:
+#         k = k + 1
+#     else:
+#         k = 0
+#     if i >= 6:
+#         j = 1
+#     i = i + 1
+#
+# plt.show()
 
 
 
@@ -679,6 +722,84 @@ plt.show()
 #     plt.plot(res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].Date, res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].DF_pred)
 #     i = i + 1
 #     plt.show()
+
+
+i = 0
+for year_i in res_eval_df_probs_rfc[res_eval_df_probs_rfc['DF_ind'] == 1].Date.apply(lambda x: x.year).unique():
+    fig, ax = plt.subplots(4, figsize=(23, 15), dpi=120)
+    data_wind_year_i = installed_capacity_factor_wind_power_ons[
+        installed_capacity_factor_wind_power_ons['Date'].apply(lambda x: x.year).isin([year_i])]
+    data_solar_year_i = installed_capacity_factor_solar_pv_power[
+        installed_capacity_factor_solar_pv_power['Date'].apply(lambda x: x.year).isin([year_i])]
+    data_sum_year_i = installed_capacity_factor_wind_power_ons_plus_solar[
+        installed_capacity_factor_wind_power_ons_plus_solar['Date'].apply(lambda x: x.year).isin([year_i])]
+    data_year_i = res_eval_df_probs_rfc[res_eval_df_probs_rfc['Date'].apply(lambda x: x.year).isin([year_i])]
+    data_year_i_df = res_eval_df_probs_rfc[
+        (res_eval_df_probs_rfc['DF_ind'] == 1) & (res_eval_df_probs_rfc['Date'].apply(lambda x: x.year).isin([year_i]))]
+    # data_year_i_df = res_eval_df_probs_rfc[(res_eval_df_probs_rfc['DF_ind'] == 1) & (res_eval_df_probs_rfc['Date'].apply(lambda x: x.year).isin([year_i]))]
+    ax[0].plot(data_wind_year_i['Date'], data_wind_year_i['DE'], color='navy', label='Onshore wind CF', zorder=-1, linewidth=2.0)
+    ax[1].plot(data_solar_year_i['Date'], data_solar_year_i['DE'], color='indigo', label='Solar CF', zorder=-1, linewidth=2.0)
+    ax[2].plot(data_sum_year_i['Date'], data_sum_year_i['sum'], color='violet',
+               label='Sum of onshore wind and solar CF', zorder=-1, linewidth=2.0)
+    ax[3].plot(data_year_i['Date'], data_year_i['DF_pred'], color='teal', label='Probability BRF classifier', zorder=-1, linewidth=2.0)
+    ax[3].scatter(data_year_i_df['Date'], data_year_i_df['DF_pred'], s=11, color='crimson', label='Dunkelflaute', zorder=1)
+    # ax = plt.scatter(data_year_i_df['Date'], data_year_i_df['DF_pred'])
+    ax[0].hlines(0.5, data_solar_year_i['Date'].iloc[0], data_solar_year_i['Date'].iloc[-1], 'green', zorder=1, linewidth=3.0)
+    ax[1].hlines(0.5, data_solar_year_i['Date'].iloc[0], data_solar_year_i['Date'].iloc[-1], 'green', zorder=1, linewidth=3.0)
+    ax[2].hlines(1, data_solar_year_i['Date'].iloc[0], data_solar_year_i['Date'].iloc[-1], 'green', zorder=1, linewidth=3.0)
+    matplotlib.rc('xtick', labelsize=18)
+    matplotlib.rc('ytick', labelsize=18)
+    fig.legend(fontsize=22, loc='lower center', bbox_to_anchor=(0.5, -0.005),
+          fancybox=True, ncol=5)
+    #fig.tight_layout()
+    plt.savefig(
+        'ClassificationResults_Probabilities_all_rfc_incl_CFs' + str(year_i) + '.png')
+    # ax.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d'))
+    # plt.plot(res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].Date, res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].DF_pred)
+    i = i + 1
+    plt.show()
+
+i = 0
+j = 0
+k = 0
+fig, ax = plt.subplots(2,7, figsize=(20, 7), dpi=120)
+for year_i in res_eval_df_probs_rfc[res_eval_df_probs_rfc['DF_ind'] == 1].Date.apply(lambda x: x.year).unique()[1:]:
+    data_sum_year_i = installed_capacity_factor_wind_power_ons_plus_solar[
+        installed_capacity_factor_wind_power_ons_plus_solar['Date'].apply(lambda x: x.year).isin([year_i])]
+    data_year_i = res_eval_df_probs_rfc[res_eval_df_probs_rfc['Date'].apply(lambda x: x.year).isin([year_i])]
+    data_year_i_df = res_eval_df_probs_rfc[
+        (res_eval_df_probs_rfc['DF_ind'] == 1) & (res_eval_df_probs_rfc['Date'].apply(lambda x: x.year).isin([year_i]))]
+    data_all = data_sum_year_i.merge(data_year_i, how = 'left', on = 'Date')
+    data_year_i_df = data_year_i_df.merge(data_sum_year_i, how = 'left', on = 'Date')
+    #ax[j, k].scatter(data_year_i['DF_pred'],
+    #            data_sum_year_i['sum'])
+    ax[j, k].scatter(data_all['DF_pred'],
+                data_sum_year_i['sum'], s=3, color='teal', label=str(year_i))
+    ax[j, k].scatter(data_year_i_df['DF_pred'],
+                data_year_i_df['sum'], s=3, color='crimson', label='Dunkelflaute')
+    ax[j, k].hlines(y = 1,xmin=0, xmax=1, colors = 'navy')
+    ax[j, k].set_xlim(left=0, right=1)
+    ax[j, k].set_ylim(bottom=0, top=4.5)
+    ax[j, k].legend(loc="upper right",fontsize=12.5)
+    matplotlib.rc('xtick', labelsize=13)
+    matplotlib.rc('ytick', labelsize=13)
+    #ax[j,k].ylim(bottom=0)
+    #ax.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d'))
+    #plt.plot(res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].Date, res_eval_df_probs[res_eval_df_probs['DF_ind'] == 1].DF_pred)
+    if k <= 5:
+        k = k + 1
+    else:
+        k = 0
+    if i >= 6:
+        j = 1
+    i = i + 1
+
+fig.delaxes(ax[1, 6])
+fig.supxlabel('Predicted probability of Dunkelflaute from Balanced Random Forest classifier', fontsize=19)
+fig.supylabel('Sum of solar and onshore wind capacity factor', fontsize=19)
+plt.savefig(
+    'ClassificationResults_Probabilities_all_Scatterplot_per_year.png')
+plt.show()
 
 i = 0
 for year_i in res_eval_df_probs_rfc[res_eval_df_probs_rfc['DF_ind'] == 1].Date.apply(lambda x: x.year).unique():

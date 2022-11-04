@@ -10,14 +10,21 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
+from sklearn.ensemble import BaggingClassifier
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import OneHotEncoder
+from imblearn.ensemble import BalancedRandomForestClassifier
+from imblearn.metrics import classification_report_imbalanced
+from sklearn.model_selection import cross_validate
+from sklearn.dummy import DummyClassifier
+from sklearn.metrics import roc_auc_score
 
 ### Create MasterTable ###
 msl_aggr_DE_79to21 = pd.read_csv(config.file_path_ext_ssd + 'features_mean_std_mslDeutschland.csv', sep=';')
 msl_aggr_DE_79to21['Dates'] = msl_aggr_DE_79to21['Dates'].apply(
     lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
-msl_aggr_DE_79to21 = msl_aggr_DE_79to21.rename(columns = {'Dates': 'Date', 'mean': 'mslp_mean', 'std': 'mslp_std'})
+msl_aggr_DE_79to21 = msl_aggr_DE_79to21.rename(columns = {'Dates': 'Date', 'mean': 'mslp mean DE', 'std': 'mslp std DE'})
 
 msl_aggr_GWL_79to21 = pd.read_csv(config.file_path_ext_ssd + 'features_mean_std_msl_all.csv', sep=';')
 msl_aggr_GWL_79to21['Date'] = msl_aggr_GWL_79to21['Dates'].apply(
@@ -32,7 +39,7 @@ msl_aggr_NL_79to21 = pd.concat([msl_aggr_NL_79to90, msl_aggr_NL_91to00, msl_aggr
 
 msl_aggr_NL_79to21['Dates'] = msl_aggr_NL_79to21['Dates'].apply(
     lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
-msl_aggr_NL_79to21 = msl_aggr_NL_79to21.rename(columns = {'Dates': 'Date', 'mean': 'mslp_mean_NL', 'std': 'mslp_std_NL'})
+msl_aggr_NL_79to21 = msl_aggr_NL_79to21.rename(columns = {'Dates': 'Date', 'mean': 'mslp mean NL', 'std': 'mslp std NL'})
 
 msl_aggr_PL_79to90 = pd.read_csv(config.file_path_ext_ssd + 'features_mean_std_mslPolska79to90.csv', sep = ';', encoding='latin1')
 msl_aggr_PL_91to00 = pd.read_csv(config.file_path_ext_ssd + 'features_mean_std_mslPolska91to00.csv', sep = ';', encoding='latin1')
@@ -43,7 +50,7 @@ msl_aggr_PL_79to21 = pd.concat([msl_aggr_PL_79to90, msl_aggr_PL_91to00, msl_aggr
 
 msl_aggr_PL_79to21['Dates'] = msl_aggr_PL_79to21['Dates'].apply(
     lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
-msl_aggr_PL_79to21 = msl_aggr_PL_79to21.rename(columns = {'Dates': 'Date', 'mean': 'mslp_mean_PL', 'std': 'mslp_std_PL'})
+msl_aggr_PL_79to21 = msl_aggr_PL_79to21.rename(columns = {'Dates': 'Date', 'mean': 'mslp mean PL', 'std': 'mslp std PL'})
 
 msl_aggr_FR_79to90 = pd.read_csv(config.file_path_ext_ssd + 'features_mean_std_mslFrance79to90.csv', sep = ';', encoding='latin1')
 msl_aggr_FR_91to00 = pd.read_csv(config.file_path_ext_ssd + 'features_mean_std_mslFrance91to00.csv', sep = ';', encoding='latin1')
@@ -54,12 +61,13 @@ msl_aggr_FR_79to21 = pd.concat([msl_aggr_FR_79to90, msl_aggr_FR_91to00, msl_aggr
 
 msl_aggr_FR_79to21['Dates'] = msl_aggr_FR_79to21['Dates'].apply(
     lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
-msl_aggr_FR_79to21 = msl_aggr_FR_79to21.rename(columns = {'Dates': 'Date', 'mean': 'mslp_mean_FR', 'std': 'mslp_std_FR'})
+msl_aggr_FR_79to21 = msl_aggr_FR_79to21.rename(columns = {'Dates': 'Date', 'mean': 'mslp mean FR', 'std': 'mslp std FR'})
 
 t2m_aggr_DE_79to21 = pd.read_csv(config.file_path_ext_ssd + 'features_mean_std_t2mDeutschland.csv', sep=';')
 t2m_aggr_DE_79to21['Dates'] = t2m_aggr_DE_79to21['Dates'].apply(
     lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
-t2m_aggr_DE_79to21 = t2m_aggr_DE_79to21.rename(columns = {'Dates': 'Date', 'mean': 't2m_mean', 'std': 't2m_std'})
+t2m_aggr_DE_79to21 = t2m_aggr_DE_79to21.rename(columns = {'Dates': 'Date', 'mean': 't2m mean DE', 'std': 't2m std DE'})
+
 
 # ---- Installed CF
 installed_capacity_factor_solar_pv_power = pd.read_csv('installed_capacity_factor_solar_pv_power_h2.csv',
@@ -84,22 +92,12 @@ installed_capacity_factor_solar_pv_power = installed_capacity_factor_solar_pv_po
 #installed_capacity_factor_wind_power_ons = installed_capacity_factor_wind_power_ons[installed_capacity_factor_wind_power_ons['Date'].dt.year.isin(range(2007, 2022))].reset_index().drop(columns = 'index')
 installed_capacity_factor_wind_power_ons = installed_capacity_factor_wind_power_ons[['Date', 'DE']]
 
-
-# dunkelflaute_dates_DE = pd.read_csv(
-#     'CFR_below_threshold_for_x_hrs_relative_counts_per_nbr_of_hours_' + str('DE') + str(
-#         '0.5') + '_PVOnshoreWind_AC_dates.csv')
-#
-# dunkelflaute_dates_DE['DFDates'] = dunkelflaute_dates_DE['0'].apply(
-#     lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
-# DF_indices = msl_aggr_DE_79to21['Date'].isin(dunkelflaute_dates_DE['DFDates'])
-# DF_indices_0_1_encoding = DF_indices.apply(lambda x: int(x))
-
-
 mastertableDFclassifier = msl_aggr_DE_79to21.merge(t2m_aggr_DE_79to21, on = 'Date', how = 'left')
 mastertableDFclassifier = mastertableDFclassifier.merge(msl_aggr_GWL_79to21, on = 'Date', how = 'left')
 mastertableDFclassifier = mastertableDFclassifier.merge(msl_aggr_PL_79to21, on = 'Date', how = 'left')
 mastertableDFclassifier = mastertableDFclassifier.merge(msl_aggr_NL_79to21, on = 'Date', how = 'left')
 mastertableDFclassifier = mastertableDFclassifier.merge(msl_aggr_FR_79to21, on = 'Date', how = 'left')
+#mastertableDFclassifier['DF_Indicator_h'] = DF_indices_0_1_encoding
 
 mastertableDFclassifier = mastertableDFclassifier.merge(installed_capacity_factor_wind_power_ons, on = 'Date', how = 'left')
 mastertableDFclassifier = mastertableDFclassifier.rename(columns = {'DE': 'AdjCF_OnsWind'})
@@ -116,57 +114,62 @@ mastertableDFclassifier['Dunkel_Indicator'] = mastertableDFclassifier['Dunkel_In
 mastertableDFclassifier['Month'] = mastertableDFclassifier['Date'].apply(lambda x: x.month)
 mastertableDFclassifier['Hour'] = mastertableDFclassifier['Date'].apply(lambda x: x.hour)
 ohe = OneHotEncoder().fit_transform(X = pd.DataFrame(mastertableDFclassifier['Date'].apply(lambda x: x.month).values)).toarray()
-mastertableDFclassifier[['Ind_Jan', 'Ind_Feb', 'Ind_Mar', 'Ind_Apr', 'Ind_May', 'Ind_Jun', 'Ind_Jul', 'Ind_Aug', 'Ind_Sep', 'Ind_Oct', 'Ind_Nov', 'Ind_Dec']] = ohe
+mastertableDFclassifier[['Ind Jan', 'Ind Feb', 'Ind Mar', 'Ind Apr', 'Ind May', 'Ind Jun', 'Ind Jul', 'Ind Aug', 'Ind Sep', 'Ind Oct', 'Ind Nov', 'Ind Dec']] = ohe
 # --- Add Lags ---
-daily_mean = mastertableDFclassifier.set_index('Date')[['mslp_mean', 'mslp_std']].groupby(pd.Grouper(freq='d')).mean().rename({'mslp_mean': 'mslp_daily_mean', 'mslp_std': 'mslp_daily_std' }, axis = 'columns').reset_index()
+daily_mean = mastertableDFclassifier.set_index('Date')[['mslp mean DE', 'mslp std DE']].groupby(pd.Grouper(freq='d')).mean().rename({'mslp mean DE': 'mslp daily mean DE', 'mslp std DE': 'mslp daily std DE' }, axis = 'columns').reset_index()
 mastertableDFclassifier = mastertableDFclassifier.merge(daily_mean, on = 'Date', how = 'left')
 
-daily_max = mastertableDFclassifier.set_index('Date')[['mslp_mean', 'mslp_std']].groupby(pd.Grouper(freq='d')).max().rename({'mslp_mean': 'mslp_daily_mean_max', 'mslp_std': 'mslp_daily_std_max' }, axis = 'columns').reset_index()
+daily_max = mastertableDFclassifier.set_index('Date')[['mslp mean DE', 'mslp std DE']].groupby(pd.Grouper(freq='d')).max().rename({'mslp mean DE': 'mslp daily max of mean DE', 'mslp std DE': 'mslp daily max of std DE' }, axis = 'columns').reset_index()
 mastertableDFclassifier = mastertableDFclassifier.merge(daily_max, on = 'Date', how = 'left')
 
-daily_min = mastertableDFclassifier.set_index('Date')[['mslp_mean', 'mslp_std']].groupby(pd.Grouper(freq='d')).min().rename({'mslp_mean': 'mslp_daily_mean_min', 'mslp_std': 'mslp_daily_std_min' }, axis = 'columns').reset_index()
+daily_min = mastertableDFclassifier.set_index('Date')[['mslp mean DE', 'mslp std DE']].groupby(pd.Grouper(freq='d')).min().rename({'mslp mean DE': 'mslp daily min of mean DE', 'mslp std DE': 'mslp daily min of std DE' }, axis = 'columns').reset_index()
 mastertableDFclassifier = mastertableDFclassifier.merge(daily_min, on = 'Date', how = 'left')
 
-mastertableDFclassifier[['mslp_daily_mean', 'mslp_daily_std', 'mslp_daily_mean_max', 'mslp_daily_std_max', 'mslp_daily_mean_min', 'mslp_daily_std_min']] = mastertableDFclassifier[['mslp_daily_mean', 'mslp_daily_std', 'mslp_daily_mean_max', 'mslp_daily_std_max', 'mslp_daily_mean_min', 'mslp_daily_std_min']].fillna(method="ffill")
+mastertableDFclassifier[['mslp daily mean DE', 'mslp daily std DE', 'mslp daily max of mean DE', 'mslp daily max of std DE', 'mslp daily min of mean DE', 'mslp daily min of std DE']] = mastertableDFclassifier[['mslp daily mean DE', 'mslp daily std DE', 'mslp daily max of mean DE', 'mslp daily max of std DE', 'mslp daily min of mean DE', 'mslp daily min of std DE']].fillna(method="ffill")
 
-mastertableDFclassifier['Lag_1h_mslp_mean'] = mastertableDFclassifier['mslp_mean'].shift(1)
-mastertableDFclassifier['Lag_2h_mslp_mean'] = mastertableDFclassifier['mslp_mean'].shift(2)
-mastertableDFclassifier['Lag_5h_mslp_mean'] = mastertableDFclassifier['mslp_mean'].shift(5)
-mastertableDFclassifier['Lag_24h_mslp_mean'] = mastertableDFclassifier['mslp_mean'].shift(24)
-mastertableDFclassifier['Lag_48h_mslp_mean'] = mastertableDFclassifier['mslp_mean'].shift(48)
-mastertableDFclassifier['Lag_120h_mslp_mean'] = mastertableDFclassifier['mslp_mean'].shift(120)
+mastertableDFclassifier['mslp mean DE lag 1h'] = mastertableDFclassifier['mslp mean DE'].shift(1)
+mastertableDFclassifier['mslp mean DE lag 2h'] = mastertableDFclassifier['mslp mean DE'].shift(2)
+mastertableDFclassifier['mslp mean DE lag 5h'] = mastertableDFclassifier['mslp mean DE'].shift(5)
+mastertableDFclassifier['mslp mean DE lag 24h'] = mastertableDFclassifier['mslp mean DE'].shift(24)
+mastertableDFclassifier['mslp mean DE lag 48h'] = mastertableDFclassifier['mslp mean DE'].shift(48)
+mastertableDFclassifier['mslp mean DE lag 120h'] = mastertableDFclassifier['mslp mean DE'].shift(120)
 
-mastertableDFclassifier['Lag_24h_mslp_mean_PL'] = mastertableDFclassifier['mslp_mean_PL'].shift(24)
-mastertableDFclassifier['Lag_24h_mslp_mean_NL'] = mastertableDFclassifier['mslp_mean_NL'].shift(24)
-mastertableDFclassifier['Lag_24h_mslp_mean_FR'] = mastertableDFclassifier['mslp_mean_FR'].shift(24)
+mastertableDFclassifier['mslp mean PL lag 24h'] = mastertableDFclassifier['mslp mean PL'].shift(24)
+mastertableDFclassifier['mslp mean NL lag 24h'] = mastertableDFclassifier['mslp mean NL'].shift(24)
+mastertableDFclassifier['mslp mean FR lag 24h'] = mastertableDFclassifier['mslp mean FR'].shift(24)
 
-mastertableDFclassifier['Lag_120h_mslp_mean_PL'] = mastertableDFclassifier['mslp_mean_PL'].shift(120)
-mastertableDFclassifier['Lag_120h_mslp_mean_NL'] = mastertableDFclassifier['mslp_mean_NL'].shift(120)
-mastertableDFclassifier['Lag_120h_mslp_mean_FR'] = mastertableDFclassifier['mslp_mean_FR'].shift(120)
+mastertableDFclassifier['mslp mean PL lag 120h'] = mastertableDFclassifier['mslp mean PL'].shift(120)
+mastertableDFclassifier['mslp mean NL lag 120h'] = mastertableDFclassifier['mslp mean NL'].shift(120)
+mastertableDFclassifier['mslp mean FR lag 120h'] = mastertableDFclassifier['mslp mean FR'].shift(120)
 
-mastertableDFclassifier['Lag_1h_mslp_std'] = mastertableDFclassifier['mslp_std'].shift(1)
-mastertableDFclassifier['Lag_2h_mslp_std'] = mastertableDFclassifier['mslp_std'].shift(2)
-mastertableDFclassifier['Lag_5h_mslp_std'] = mastertableDFclassifier['mslp_std'].shift(5)
-mastertableDFclassifier['Lag_24h_mslp_std'] = mastertableDFclassifier['mslp_std'].shift(24)
-mastertableDFclassifier['Lag_48h_mslp_std'] = mastertableDFclassifier['mslp_std'].shift(48)
-mastertableDFclassifier['Lag_120h_mslp_std'] = mastertableDFclassifier['mslp_std'].shift(120)
+mastertableDFclassifier['mslp std DE lag 1h'] = mastertableDFclassifier['mslp std DE'].shift(1)
+mastertableDFclassifier['mslp std DE lag 2h'] = mastertableDFclassifier['mslp std DE'].shift(2)
+mastertableDFclassifier['mslp std DE lag 5h'] = mastertableDFclassifier['mslp std DE'].shift(5)
+mastertableDFclassifier['mslp std DE lag 24h'] = mastertableDFclassifier['mslp std DE'].shift(24)
+mastertableDFclassifier['mslp std DE lag 48h'] = mastertableDFclassifier['mslp std DE'].shift(48)
+mastertableDFclassifier['mslp std DE lag 120h'] = mastertableDFclassifier['mslp std DE'].shift(120)
 
-mastertableDFclassifier['Lag_120h_mslp_std_PL'] = mastertableDFclassifier['mslp_std_PL'].shift(120)
-mastertableDFclassifier['Lag_120h_mslp_std_NL'] = mastertableDFclassifier['mslp_std_NL'].shift(120)
-mastertableDFclassifier['Lag_120h_mslp_std_FR'] = mastertableDFclassifier['mslp_std_FR'].shift(120)
+mastertableDFclassifier['mslp std PL lag 24h'] = mastertableDFclassifier['mslp std PL'].shift(24)
+mastertableDFclassifier['mslp std NL lag 24h'] = mastertableDFclassifier['mslp std NL'].shift(24)
+mastertableDFclassifier['mslp std FR lag 24h'] = mastertableDFclassifier['mslp std FR'].shift(24)
 
-mastertableDFclassifier['Lag_24h_t2m_mean'] = mastertableDFclassifier['t2m_mean'].shift(24)
-mastertableDFclassifier['Lag_48h_t2m_mean'] = mastertableDFclassifier['t2m_mean'].shift(48)
-mastertableDFclassifier['Lag_120h_t2m_mean'] = mastertableDFclassifier['t2m_mean'].shift(120)
+mastertableDFclassifier['mslp std PL lag 120h'] = mastertableDFclassifier['mslp std PL'].shift(120)
+mastertableDFclassifier['mslp std NL lag 120h'] = mastertableDFclassifier['mslp std NL'].shift(120)
+mastertableDFclassifier['mslp std FR lag 120h'] = mastertableDFclassifier['mslp std FR'].shift(120)
 
-mastertableDFclassifier['Lag_24h_t2m_std'] = mastertableDFclassifier['t2m_std'].shift(24)
-mastertableDFclassifier['Lag_48h_t2m_std'] = mastertableDFclassifier['t2m_std'].shift(48)
-mastertableDFclassifier['Lag_120h_t2m_std'] = mastertableDFclassifier['t2m_std'].shift(120)
+mastertableDFclassifier['t2m mean DE lag 24h'] = mastertableDFclassifier['t2m mean DE'].shift(24)
+mastertableDFclassifier['t2m mean DE lag 48h'] = mastertableDFclassifier['t2m mean DE'].shift(48)
+mastertableDFclassifier['t2m mean DE lag 120h'] = mastertableDFclassifier['t2m mean DE'].shift(120)
+
+mastertableDFclassifier['t2m std DE lag 24h'] = mastertableDFclassifier['t2m std DE'].shift(24)
+mastertableDFclassifier['t2m std DE lag 48h'] = mastertableDFclassifier['t2m std DE'].shift(48)
+mastertableDFclassifier['t2m std DE lag 120h'] = mastertableDFclassifier['t2m std DE'].shift(120)
 
 for col in msl_aggr_GWL_79to21.columns[1:-1]:
     mastertableDFclassifier[str(col) + '_Lag_24h'] = mastertableDFclassifier[str(col)].shift(24)
     mastertableDFclassifier[str(col) + '_Lag_120h'] = mastertableDFclassifier[str(col)].shift(120)
 
+mastertableDFclassifier = mastertableDFclassifier.rename(columns = {'mean_Greenland': 'mslp mean Greenland', 'std_Greenland': 'mslp std Greenland', 'mean_Iceland': 'mslp mean Iceland', 'std_Iceland': 'mslp std Iceland', 'mean_British_Isles': 'mslp mean British Isles', 'std_British_Isles': 'mslp std British Isles', 'mean_Mediterranean_Sea': 'mslp mean Mediterranean Sea', 'std_Mediterranean_Sea': 'mslp std Mediterranean Sea', 'mean_Sea_west_Iberian_Peninsula': 'mslp mean Sea west Iberian Peninsula', 'std_Sea_west_Iberian_Peninsula': 'mslp std Sea west Iberian Peninsula', 'mean_Norwegian_Sea': 'mslp mean Norwegian Sea', 'std_Norwegian_Sea': 'mslp std Norwegian Sea', 'mean_North_Sea': 'mslp mean North Sea', 'std_North_Sea': 'mslp std North Sea', 'mean_Western_Russia': 'mslp mean Western Russia', 'std_Western_Russia': 'mslp std Western Russia', 'mean_Sweden': 'mslp mean Sweden', 'std_Sweden': 'mslp std Sweden'})
 
 #mastertableDFclassifier = mastertableDFclassifier[mastertableDFclassifier['Date'].apply(lambda x: x.hour) == 11]
 # Test
@@ -202,12 +205,33 @@ mastertableDFclassifier = mastertableDFclassifier.reset_index().drop(columns = '
 #                              , 'mean_Greenland_Lag_24h' , 'mean_British_Isles_Lag_24h',  'mean_Mediterranean_Sea_Lag_24h', 'mean_Sea_west_Iberian_Peninsula_Lag_24h','mean_Norwegian_Sea_Lag_24h' , 'mean_North_Sea_Lag_24h', 'mean_Western_Russia_Lag_24h',  'mean_Sweden_Lag_24h'
 #                             , 'mean_Greenland_Lag_120h', 'mean_British_Isles_Lag_120h', 'mean_Mediterranean_Sea_Lag_120h', 'mean_Sea_west_Iberian_Peninsula_Lag_120h', 'mean_Norwegian_Sea_Lag_120h', 'mean_North_Sea_Lag_120h', 'mean_Western_Russia_Lag_120h', 'mean_Sweden_Lag_120h']]
 
-X = mastertableDFclassifier[['mslp_mean','mslp_std', 't2m_mean', 'Ind_Jan', 'Ind_Feb', 'Ind_Mar', 'Ind_Apr', 'Ind_May', 'Ind_Jun', 'Ind_Jul', 'Ind_Aug', 'Ind_Sep', 'Ind_Oct', 'Ind_Nov', 'Ind_Dec', 'mslp_daily_mean', 'mslp_daily_std', 'mslp_daily_mean_max', 'mslp_daily_std_max', 'mslp_daily_mean_min', 'mslp_daily_std_min', 'Lag_1h_mslp_mean', 'Lag_2h_mslp_mean', 'Lag_5h_mslp_mean', 'Lag_1h_mslp_std', 'Lag_2h_mslp_std' , 'Lag_5h_mslp_std', 'Lag_120h_t2m_mean', 'Lag_120h_mslp_std', 'mslp_mean_PL', 'mslp_std_PL', 'mslp_mean_NL', 'mslp_std_NL', 'mslp_mean_FR', 'mslp_std_FR', 'Lag_120h_mslp_mean_PL', 'Lag_120h_mslp_std_PL', 'Lag_120h_mslp_mean_NL', 'Lag_120h_mslp_std_NL', 'Lag_120h_mslp_mean_FR', 'Lag_120h_mslp_std_FR', 'Lag_24h_mslp_mean_PL', 'Lag_24h_mslp_mean_NL',  'Lag_24h_mslp_mean_FR'
-                             , 'mean_Greenland' , 'mean_British_Isles',  'mean_Mediterranean_Sea', 'mean_Sea_west_Iberian_Peninsula','mean_Norwegian_Sea' , 'mean_North_Sea', 'mean_Western_Russia',  'mean_Sweden'
-                            , 'mean_Greenland_Lag_24h' , 'mean_British_Isles_Lag_24h',  'mean_Mediterranean_Sea_Lag_24h', 'mean_Sea_west_Iberian_Peninsula_Lag_24h','mean_Norwegian_Sea_Lag_24h' , 'mean_North_Sea_Lag_24h', 'mean_Western_Russia_Lag_24h',  'mean_Sweden_Lag_24h']]
+# X = mastertableDFclassifier[['mslp mean DE', 'mslp mean DE lag 5h', 'mslp mean DE lag 24h', 'mslp mean DE lag 48h', 'mslp mean DE lag 120h',
+#                              'mslp std DE', 'mslp std DE lag 5h', 'mslp std DE lag 24h', 'mslp std DE lag 48h', 'mslp std DE lag 120h',
+#                              't2m mean DE', 't2m mean DE lag 24h', 't2m mean DE lag 48h', 't2m mean DE lag 120h',
+#                              't2m std DE', 't2m std DE lag 24h', 't2m std DE lag 48h', 't2m std DE lag 120h',
+#                             'mslp daily mean DE', 'mslp daily std DE', 'mslp daily max of mean DE', 'mslp daily max of std DE', 'mslp daily min of mean DE', 'mslp daily min of std DE',
+#                             'mslp mean PL', 'mslp std PL', 'mslp mean NL', 'mslp std NL', 'mslp mean FR', 'mslp std FR',
+#                             'mslp mean PL lag 24h', 'mslp std PL lag 24h', 'mslp mean NL lag 24h', 'mslp std NL lag 24h', 'mslp mean FR lag 24h', 'mslp std FR lag 24h',
+#                              'mslp mean PL lag 120h', 'mslp std PL lag 120h', 'mslp mean NL lag 120h','mslp std NL lag 120h', 'mslp mean FR lag 120h', 'mslp std FR lag 120h',
+#                              'mslp mean Greenland' , 'mslp mean Iceland' , 'mslp mean British Isles',  'mslp mean Mediterranean Sea', 'mslp mean Sea west Iberian Peninsula','mslp mean Norwegian Sea' , 'mslp mean North Sea', 'mslp mean Western Russia',  'mslp mean Sweden',
+#                              'mslp std Greenland', 'mslp std Iceland', 'mslp std British Isles',
+#                              'mslp std Mediterranean Sea', 'mslp std Sea west Iberian Peninsula',
+#                              'mslp std Norwegian Sea', 'mslp std North Sea', 'mslp std Western Russia',
+#                              'mslp std Sweden',
+#                              'Ind Jan', 'Ind Feb', 'Ind Mar', 'Ind Apr', 'Ind May', 'Ind Jun', 'Ind Jul', 'Ind Aug', 'Ind Sep', 'Ind Oct', 'Ind Nov', 'Ind Dec']]
+
+X = mastertableDFclassifier[['mslp mean DE', 'mslp mean DE lag 5h', 'mslp mean DE lag 24h', 'mslp mean DE lag 48h', 'mslp mean DE lag 120h',
+                             'mslp std DE', 'mslp std DE lag 5h', 'mslp std DE lag 24h', 'mslp std DE lag 48h', 'mslp std DE lag 120h',
+                             't2m mean DE', 't2m mean DE lag 24h', 't2m mean DE lag 48h', 't2m mean DE lag 120h',
+                            'mslp daily mean DE', 'mslp daily std DE', 'mslp daily max of mean DE', 'mslp daily max of std DE', 'mslp daily min of mean DE', 'mslp daily min of std DE',
+                            'mslp mean PL', 'mslp std PL', 'mslp mean NL', 'mslp std NL', 'mslp mean FR', 'mslp std FR',
+                            'mslp mean PL lag 24h', 'mslp std PL lag 24h', 'mslp mean NL lag 24h', 'mslp std NL lag 24h', 'mslp mean FR lag 24h', 'mslp std FR lag 24h',
+                             'mslp mean PL lag 120h', 'mslp std PL lag 120h', 'mslp mean NL lag 120h','mslp std NL lag 120h', 'mslp mean FR lag 120h', 'mslp std FR lag 120h',
+                             'mslp mean Greenland' , 'mslp mean Iceland' , 'mslp mean British Isles',  'mslp mean Mediterranean Sea', 'mslp mean Sea west Iberian Peninsula','mslp mean Norwegian Sea' , 'mslp mean North Sea', 'mslp mean Western Russia',  'mslp mean Sweden',
+                             'mslp std Sweden',
+                             'Ind Jan', 'Ind Feb', 'Ind Mar', 'Ind Apr', 'Ind May', 'Ind Jun', 'Ind Jul', 'Ind Aug', 'Ind Sep', 'Ind Oct', 'Ind Nov', 'Ind Dec']]
 
 y = mastertableDFclassifier['Flaute_Indicator']
-
 # Train test split
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, shuffle = False)
@@ -304,7 +328,7 @@ print(1)
 # precision_5 = precision_score(y_test, knn_res_y_5.values)
 # recall_5 = recall_score(y_test, knn_res_y_5.values)
 
-rfc = RandomForestClassifier(random_state=0, min_samples_leaf = 2, n_estimators= 200).fit(X_train, y_train)
+rfc = BalancedRandomForestClassifier(n_estimators=400, random_state=0).fit(X_train, y_train)
 pred_rfc = rfc.predict_proba(X_test)
 #
 clf_pred_m_rfc = pd.DataFrame(pred_rfc)
@@ -357,6 +381,22 @@ res_eval_df_probs_rfc['DF_pred'] = pred_rfc[:,1]
 from matplotlib.pyplot import figure
 import matplotlib
 
+installed_capacity_factor_solar_pv_power = pd.read_csv('installed_capacity_factor_solar_pv_power_h2.csv',
+                                                       error_bad_lines=False, sep=';', encoding='latin1',
+                                                       index_col=False, low_memory=False)
+installed_capacity_factor_wind_power_ons = pd.read_csv('installed_capacity_factor_wind_power_ons.csv',
+                                                       error_bad_lines=False, sep=';', encoding='latin1',
+                                                       index_col=False, low_memory=False)
+
+installed_capacity_factor_solar_pv_power['Date'] = installed_capacity_factor_solar_pv_power['Date'].apply(
+    lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
+installed_capacity_factor_wind_power_ons['Date'] = installed_capacity_factor_wind_power_ons['Date'].apply(
+    lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
+
+installed_capacity_factor_solar_pv_power = installed_capacity_factor_solar_pv_power.fillna(0)
+installed_capacity_factor_solar_pv_power = installed_capacity_factor_solar_pv_power.round(3)
+installed_capacity_factor_wind_power_ons = installed_capacity_factor_wind_power_ons.round(3)
+
 installed_capacity_factor_solar_pv_power = installed_capacity_factor_solar_pv_power[installed_capacity_factor_solar_pv_power['Date'].dt.year.isin(range(2007, 2022))].reset_index().drop(columns = 'index')
 installed_capacity_factor_solar_pv_power = installed_capacity_factor_solar_pv_power[['Date', 'DE']]
 
@@ -381,7 +421,7 @@ installed_capacity_factor_wind_power_ons_plus_solar['sum'] = installed_capacity_
 i = 0
 j = 0
 k = 0
-fig, ax = plt.subplots(2,7, figsize=(15, 7), dpi=90)
+fig, ax = plt.subplots(2,7, figsize=(20, 7), dpi=120)
 for year_i in res_eval_df_probs_rfc[res_eval_df_probs_rfc['DF_ind'] == 1].Date.apply(lambda x: x.year).unique()[1:]:
     data_sum_year_i = installed_capacity_factor_wind_power_ons_plus_solar[
         installed_capacity_factor_wind_power_ons_plus_solar['Date'].apply(lambda x: x.year).isin([year_i])]
@@ -392,11 +432,11 @@ for year_i in res_eval_df_probs_rfc[res_eval_df_probs_rfc['DF_ind'] == 1].Date.a
     #ax[j, k].scatter(data_year_i['DF_pred'],
     #            data_sum_year_i['sum'])
     ax[j, k].scatter(data_all['DF_pred'],
-                data_all['wind_ons_DE'], s=3, color='indigo', label=str(year_i))
-    ax[j, k].hlines(y = 0.25,xmin=0, xmax=1, colors = 'crimson')
+                data_all['wind_ons_DE'], s=3, color='teal', label=str(year_i))
+    ax[j, k].hlines(y = 0.25,xmin=0, xmax=1, colors = 'navy')
     ax[j, k].set_xlim(left=0, right=1)
     ax[j, k].set_ylim(bottom=0, top=4.5)
-    ax[j, k].legend(loc="upper right")
+    ax[j, k].legend(loc="upper right", fontsize=12.5)
     matplotlib.rc('xtick', labelsize=13)
     matplotlib.rc('ytick', labelsize=13)
     #ax[j,k].ylim(bottom=0)
@@ -410,15 +450,16 @@ for year_i in res_eval_df_probs_rfc[res_eval_df_probs_rfc['DF_ind'] == 1].Date.a
         j = 1
     i = i + 1
 
-fig.supxlabel('Probability (for onshore wind CF <= 0.25) Classifier')
-fig.supylabel('Seasonal adjusted and corrected onshore wind capacity factor')
+fig.delaxes(ax[1, 6])
+fig.supxlabel('Predicted probability of onshore wind capacity factor <= 0.25 from Balanced Random Forest classifier', fontsize=19)
+fig.supylabel('Onshore wind capacity factor', fontsize=19)
 plt.savefig(
     'ClassificationResults_Probabilities_ons_wind_Scatterplot_per_year.png')
 plt.show()
 
 i = 0
 for year_i in res_eval_df_probs_rfc[res_eval_df_probs_rfc['DF_ind'] == 1].Date.apply(lambda x: x.year).unique():
-    fig, ax = plt.subplots(2, figsize=(23, 7), dpi=90)
+    fig, ax = plt.subplots(2, figsize=(23, 6), dpi=120)
     data_wind_year_i = installed_capacity_factor_wind_power_ons[
         installed_capacity_factor_wind_power_ons['Date'].apply(lambda x: x.year).isin([year_i])]
     data_solar_year_i = installed_capacity_factor_solar_pv_power[
@@ -429,19 +470,19 @@ for year_i in res_eval_df_probs_rfc[res_eval_df_probs_rfc['DF_ind'] == 1].Date.a
     data_year_i_df = res_eval_df_probs_rfc[
         (res_eval_df_probs_rfc['DF_ind'] == 1) & (res_eval_df_probs_rfc['Date'].apply(lambda x: x.year).isin([year_i]))]
     # data_year_i_df = res_eval_df_probs_rfc[(res_eval_df_probs_rfc['DF_ind'] == 1) & (res_eval_df_probs_rfc['Date'].apply(lambda x: x.year).isin([year_i]))]
-    ax[0].plot(data_wind_year_i['Date'], data_wind_year_i['DE'], color='navy', label='Onshore wind adjusted CF')
+    ax[0].plot(data_wind_year_i['Date'], data_wind_year_i['DE'], color='navy', label='Onshore wind CF', zorder=-1)
     #ax[1].plot(data_solar_year_i['Date'], data_solar_year_i['DE'], color='indigo', label='Solar adjusted CF')
     #ax[2].plot(data_sum_year_i['Date'], data_sum_year_i['sum'], color='violet',
     #           label='Sum (Onshore wind + solar) adjusted CFs')
-    ax[1].plot(data_year_i['Date'], data_year_i['DF_pred'], color='teal', label='Probability Classifier (Ons Wind)')
-    ax[1].scatter(data_year_i_df['Date'], data_year_i_df['DF_pred'], s=7, color='crimson', label='Low ons wind CF', zorder=1)
+    ax[1].plot(data_year_i['Date'], data_year_i['DF_pred'], color='teal', label='Probability BRF Classifier (onshore wind)', zorder=-1)
+    ax[1].scatter(data_year_i_df['Date'], data_year_i_df['DF_pred'], s=7, color='crimson', label='Low onshore wind CF', zorder=1)
     # ax = plt.scatter(data_year_i_df['Date'], data_year_i_df['DF_pred'])
-    ax[0].hlines(0.25, data_solar_year_i['Date'].iloc[0], data_solar_year_i['Date'].iloc[-1], 'green')
+    ax[0].hlines(0.25, data_solar_year_i['Date'].iloc[0], data_solar_year_i['Date'].iloc[-1], 'green', zorder=1)
     #ax[1].hlines(0.5, data_solar_year_i['Date'].iloc[0], data_solar_year_i['Date'].iloc[-1], 'green')
     #ax[2].hlines(1, data_solar_year_i['Date'].iloc[0], data_solar_year_i['Date'].iloc[-1], 'green')
     matplotlib.rc('xtick', labelsize=13)
     matplotlib.rc('ytick', labelsize=13)
-    fig.legend()
+    fig.legend(fontsize=15)
     plt.savefig(
         'ClassificationResults_Probabilities_OnsWind_CF_vs_classified_probability' + str(year_i) + '.png')
     # ax.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d'))
